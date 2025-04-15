@@ -13,9 +13,9 @@ INSERT INTO users (fullname, email, password_hash, balance_cad, is_admin, status
 
 -- Add Currencies
 INSERT INTO currencies (name, symbol, current_price_usd, change_24h_percent, market_cap_usd, base_volatility, base_trend) VALUES
-('Bitcoin', 'BTC', 65000.00, 2.50, 1200000000000.00, 0.0150, 0.0010), -- 1.5% vol, 0.1% trend
-('Ethereum', 'ETH', 3500.00, -1.20, 420000000000.00, 0.0200, 0.0015), -- 2.0% vol, 0.15% trend
-('SimuCoin', 'SIM', 10.50, 5.10, 100000000.00, 0.0300, -0.0005);    -- 3.0% vol, -0.05% trend (for testing)
+('Bitcoin', 'BTC', 65000.00, 2.50, 1200000000000.00, 0.0150, 0.0010),
+('Ethereum', 'ETH', 3500.00, -1.20, 420000000000.00, 0.0200, 0.0015),
+('Solana', 'SOL', 145.00, 3.50, 65000000000.00, 0.0350, 0.0010);
 
 -- Give Test User some initial holdings
 -- Assumes the first user inserted gets id=1, second gets id=2 etc.

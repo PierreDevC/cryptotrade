@@ -176,9 +176,12 @@ class AdminController {
                 // Consider returning success still or a specific message
                 $this->jsonResponse(true, 'Currency data was not changed.');
             }
-        } catch (\PDOException $e) {
-            error_log("DB Error Update Currency: " . $e->getMessage());
-            $this->jsonResponse(false, 'Database error updating currency.', null, 500);
+        } catch (\PDOException $e) { // Catch specific DB errors first if needed
+            error_log("DB Error Update Currency (PDO): " . $e->getMessage());
+            $this->jsonResponse(false, 'Database error during update.', null, 500);
+        } catch (\Exception $e) { // Catch any other exceptions
+            error_log("General Error Update Currency: " . $e->getMessage());
+            $this->jsonResponse(false, 'An unexpected error occurred during update.', null, 500);
         }
     }
 

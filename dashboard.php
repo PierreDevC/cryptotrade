@@ -189,10 +189,10 @@
                                     <label for="cryptoAmount" class="form-label">Montant (USD)</label><div class="input-group mb-3"><span class="input-group-text">$</span><input type="number" class="form-control" id="cryptoAmount" placeholder="0.00" step="0.01"></div>
                         </div><div class="col-md-6">
                                     <label for="cryptoQuantity" class="form-label">Quantité</label><input type="number" class="form-control" id="cryptoQuantity" placeholder="0.00000000" step="any">
-                        </div></div><div class="d-flex justify-content-between mt-3">
+                        </div></div><div class="d-flex justify-content-start gap-2 mt-3">
                                 <button id="buyButton" class="btn btn-success" disabled><i class="fa-solid fa-arrow-right-to-bracket me-2"></i>Acheter</button>
                                 <button id="sellButton" class="btn btn-danger" disabled><i class="fa-solid fa-arrow-right-from-bracket me-2"></i>Vendre</button>
-                                <button id="sellAllButton" class="btn btn-outline-danger ms-2" disabled title="Vendre la quantité maximale détenue"><i class="fa-solid fa-sack-dollar me-1"></i> Vendre Tout</button>
+                                <button id="sellAllButton" class="btn btn-outline-danger" disabled title="Vendre la quantité maximale détenue"><i class="fa-solid fa-sack-dollar me-1"></i> Vendre Tout</button>
                         </div><div class="alert alert-info mt-3 d-none" id="tradeInfo"><i class="fa-solid fa-info-circle me-2"></i><span id="tradeInfoText"></span></div></div>
                     </div>
                     <div class="col-12 grid-item" style="overflow-y: auto;" id="crypto-list-card">
