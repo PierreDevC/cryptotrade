@@ -11,6 +11,9 @@ use PDO;
 class MarketController {
     private $db;
     private $currencyModel;
+    private const UPDATE_INTERVAL = 60; // Update prices every 60 seconds
+    private const STORAGE_PATH = __DIR__ . '/../../storage'; // Path to storage directory
+    private const LAST_UPDATE_FILE = self::STORAGE_PATH . '/last_update.txt';
 
     public function __construct(PDO $db) {
         $this->db = $db;
@@ -20,6 +23,8 @@ class MarketController {
     // API Endpoint: Get list of all available cryptos
     public function getCryptoList() {
         AuthGuard::protect(); // Should be logged in to see market data
+
+        $this->attemptPriceUpdate(); // Attempt to update prices based on interval
 
         $currencies = $this->currencyModel->findAll();
 
@@ -127,6 +132,87 @@ class MarketController {
              'LINK' => 'https://assets.coingecko.com/coins/images/877/thumb/chainlink-new-logo.png',
         ];
         return $map[strtoupper($symbol)] ?? 'https://via.placeholder.com/20';
+    }
+
+    // NEW: Method to attempt price update
+    private function attemptPriceUpdate() {
+        // Ensure storage directory exists and is writable
+        if (!is_dir(self::STORAGE_PATH)) {
+            if (!mkdir(self::STORAGE_PATH, 0775, true)) {
+                 error_log("MarketController: Failed to create storage directory: " . self::STORAGE_PATH);
+                 return; // Cannot proceed without storage
+            }
+        }
+        if (!is_writable(self::STORAGE_PATH)) {
+             error_log("MarketController: Storage directory not writable: " . self::STORAGE_PATH);
+             // Attempt to make it writable (might not work depending on permissions)
+             // chmod(self::STORAGE_PATH, 0775);
+             // return; // Optionally return if still not writable
+        }
+
+        $lastUpdateTime = 0;
+        if (file_exists(self::LAST_UPDATE_FILE)) {
+            $lastUpdateTime = (int)file_get_contents(self::LAST_UPDATE_FILE);
+        }
+
+        $currentTime = time();
+
+        if (($currentTime - $lastUpdateTime) > self::UPDATE_INTERVAL) {
+            try {
+                $allCurrencies = $this->currencyModel->findAll();
+                $this->db->beginTransaction(); // Start transaction for multiple updates
+
+                foreach ($allCurrencies as $currency) {
+                    // Simulate price change
+                    $currentPrice = (float)$currency['current_price_usd'];
+                    $volatility = (float)$currency['base_volatility'];
+                    $trend = (float)$currency['base_trend'];
+
+                    // Simple random factor between -1 and 1
+                    $randomInfluence = (mt_rand(-1000, 1000) / 1000.0);
+
+                    // Calculate new price: current * (1 + trend) * (1 + volatility * random)
+                    $newPrice = $currentPrice * (1 + $trend) * (1 + $volatility * $randomInfluence);
+                    $newPrice = max(0.00001, $newPrice); // Don't let price be zero or negative
+
+                    // Simulate change % fluctuation (simplified)
+                    $currentChange = (float)$currency['change_24h_percent'];
+                    // Make change fluctuate slightly based on the same random influence
+                    $changeFluctuation = $randomInfluence * 5; // Adjust multiplier for sensitivity
+                    $newChangePercent = $currentChange + $changeFluctuation;
+                    // Keep change within a plausible range (e.g., -90% to +500%)
+                    $newChangePercent = max(-90, min(500, $newChangePercent));
+
+                    // Update DB
+                    $this->currencyModel->updatePriceAndChange(
+                        (int)$currency['id'],
+                        $newPrice,
+                        $newChangePercent
+                    );
+                }
+
+                $this->db->commit(); // Commit all updates
+
+                // Update timestamp file
+                if (file_put_contents(self::LAST_UPDATE_FILE, $currentTime) === false) {
+                    error_log("MarketController: Failed to write last update time to " . self::LAST_UPDATE_FILE);
+                }
+                 error_log("MarketController: Prices updated successfully at " . $currentTime); // Log success
+
+            } catch (\PDOException $e) {
+                $this->db->rollBack();
+                error_log("MarketController: Failed to update prices: " . $e->getMessage());
+            } catch (\Exception $e) {
+                error_log("MarketController: General error during price update: " . $e->getMessage());
+                 // Potentially rollback if DB transaction was started and commit didn't happen
+                 if ($this->db->inTransaction()) {
+                     $this->db->rollBack();
+                 }
+            }
+        } else {
+            // Optional: Log that update was skipped due to interval
+             // error_log("MarketController: Price update skipped, interval not reached.");
+        }
     }
 }
 ?>

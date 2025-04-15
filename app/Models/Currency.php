@@ -43,5 +43,19 @@ class Currency {
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         return $stmt->execute();
     }
+
+    // NEW: Update price and change percentage for a currency
+    public function updatePriceAndChange($id, $newPrice, $newChangePercent) {
+         $sql = "UPDATE currencies SET
+                    current_price_usd = :price,
+                    change_24h_percent = :change,
+                    last_price_update_timestamp = CURRENT_TIMESTAMP
+                 WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':price', $newPrice);
+        $stmt->bindParam(':change', $newChangePercent);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
 }
 ?>

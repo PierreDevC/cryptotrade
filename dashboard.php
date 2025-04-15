@@ -121,10 +121,9 @@
                     <li class="nav-item"><a class="nav-link active" aria-current="page" href="#">Alertes</a></li>
                 </ul>
                 <div class="d-flex gap-2"> <div class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle font-weight-bold" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Compte <i class="fa-solid fa-user"></i></a>
+                        <button class="btn btn-outline-secondary dropdown-toggle font-weight-bold" type="button" id="navbarDropdown" data-bs-toggle="dropdown" aria-expanded="false">Compte <i class="fa-solid fa-user"></i></button>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="#"><i class="fa-solid fa-id-card me-2"></i>Profil</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fa-solid fa-gear me-2"></i>Paramètres</a></li>
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#profileSettingsModal"><i class="fa-solid fa-id-card me-2"></i>Profil et Paramètres</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="/cryptotrade/logout"><i class="fa-solid fa-right-from-bracket me-2"></i>Déconnexion</a></li>
                         </ul>
@@ -247,6 +246,27 @@
       </div>
     </div>
     <!-- End Crypto Chart Modal -->
+
+    <!-- Profile & Settings Modal -->
+    <div class="modal fade" id="profileSettingsModal" tabindex="-1" aria-labelledby="profileSettingsModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="profileSettingsModalLabel">Profil et Paramètres</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Contenu de la modale (Profil et Paramètres) sera ajouté ici -->
+            <p>Contenu du profil et des paramètres...</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            <button type="button" class="btn btn-primary">Sauvegarder les changements</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- End Profile & Settings Modal -->
 
     <!-- JavaScript - Use root-relative path -->
     <script src="/cryptotrade/js/dashboard_ajax.js" defer></script>
