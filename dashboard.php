@@ -111,6 +111,31 @@
         .bounce-effect {
           animation: bounce 1s ease;
         }
+
+        /* NEW: Dark Red Button Style */
+        .btn-danger-dark {
+          color: #fff;
+          background-color: #a71d2a; /* Darker shade of red */
+          border-color: #a71d2a;
+        }
+        .btn-danger-dark:hover {
+          color: #fff;
+          background-color: #8f1923; /* Slightly darker on hover */
+          border-color: #82171f;
+        }
+        .btn-danger-dark:focus {
+          box-shadow: 0 0 0 0.25rem rgba(196, 55, 69, 0.5); /* Adjust focus shadow color */
+        }
+        /* Ensure consistent border-radius (matches Bootstrap default) - Adjust if needed */
+        /* .grid-item .btn, .grid-item .action-button { border-radius: var(--bs-btn-border-radius, 0.375rem); } */
+
+        /* NEW: Apply consistent large border-radius to all buttons */
+        .grid-item .btn,
+        .grid-item .action-button,
+        .modal-content .btn,
+        .modal-content .action-button {
+          border-radius: 40px !important; /* Use !important to override potential conflicts */
+        }
     </style>
 </head>
 <body>
@@ -172,7 +197,7 @@
                             <button id="viewTransactionsBtn" class="action-button" data-bs-toggle="modal" data-bs-target="#profileSettingsModal" style="padding: 8px 12px; font-size: 0.9rem;">
                                 <i class="fa-solid fa-list-check me-1"></i> Consulter Transactions
                             </button>
-                            <button id="accountSettingsBtn" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#profileSettingsModal" style="padding: 8px 12px; font-size: 0.9rem;">
+                            <button id="accountSettingsBtn" class="action-button text-decoration-none" data-bs-toggle="modal" data-bs-target="#profileSettingsModal" style="padding: 8px 12px; font-size: 0.9rem;">
                                 <i class="fa-solid fa-gear me-1"></i> Paramètres du Compte
                             </button>
                         </div>
@@ -196,9 +221,9 @@
                         </div><div class="col-md-6">
                                     <label for="cryptoQuantity" class="form-label">Quantité</label><input type="number" class="form-control" id="cryptoQuantity" placeholder="0.00000000" step="any">
                         </div></div><div class="d-flex justify-content-start gap-2 mt-3">
-                                <button id="buyButton" class="btn btn-success" disabled><i class="fa-solid fa-arrow-right-to-bracket me-2"></i>Acheter</button>
-                                <button id="sellButton" class="btn btn-danger" disabled><i class="fa-solid fa-arrow-right-from-bracket me-2"></i>Vendre</button>
-                                <button id="sellAllButton" class="btn btn-outline-danger" disabled title="Vendre la quantité maximale détenue"><i class="fa-solid fa-sack-dollar me-1"></i> Vendre Tout</button>
+                                <button id="buyButton" class="action-button text-decoration-none" disabled><i class="fa-solid fa-arrow-right-to-bracket me-2"></i>Acheter</button>
+                                <button id="sellButton" class="btn btn-danger-dark" disabled><i class="fa-solid fa-arrow-right-from-bracket me-2"></i>Vendre</button>
+                                <button id="sellAllButton" class="btn btn-danger-dark" disabled title="Vendre la quantité maximale détenue"><i class="fa-solid fa-sack-dollar me-1"></i> Vendre Tout</button>
                         </div><div class="alert alert-info mt-3 d-none" id="tradeInfo"><i class="fa-solid fa-info-circle me-2"></i><span id="tradeInfoText"></span></div></div>
                     </div>
                     <div class="col-12 grid-item" style="overflow-y: auto;" id="crypto-list-card">
@@ -324,7 +349,7 @@
                         </div>
                     </div>
                     <div class="d-flex justify-content-end mt-3">
-                         <button type="submit" class="btn btn-primary" id="saveProfileButton"><i class="fas fa-save me-1"></i> Sauvegarder Profil</button>
+                         <button type="submit" class="action-button text-decoration-none" id="saveProfileButton"><i class="fas fa-save me-1"></i> Sauvegarder Profil</button>
                     </div>
                 </form>
               </div>
@@ -383,7 +408,7 @@
                             </div>
                         </div>
                         <div class="d-flex justify-content-end gap-2 mt-4">
-                            <button type="button" class="btn btn-success" id="adminAddCurrencyBtn"><i class="fas fa-plus me-1"></i> Ajouter</button>
+                            <button type="button" class="action-button text-decoration-none" id="adminAddCurrencyBtn"><i class="fas fa-plus me-1"></i> Ajouter</button>
                             <button type="button" class="btn btn-primary" id="adminUpdateCurrencyBtn" disabled><i class="fas fa-save me-1"></i> Mettre à jour</button>
                             <button type="button" class="btn btn-danger" id="adminDeleteCurrencyBtn" disabled><i class="fas fa-trash me-1"></i> Supprimer</button>
                         </div>
@@ -396,7 +421,7 @@
                 <h5 class="mb-3"><i class="fas fa-history me-2"></i>Historique des Transactions</h5>
                 <div class="d-flex justify-content-end gap-2 mb-3">
                     <button class="btn btn-sm btn-outline-secondary" id="downloadCsvBtn" disabled><i class="fas fa-file-csv me-1"></i> Télécharger CSV</button>
-                    <button class="btn btn-sm btn-outline-danger" id="downloadPdfBtn" disabled><i class="fas fa-file-pdf me-1"></i> Télécharger PDF</button>
+                    <button class="btn btn-sm btn-outline-secondary" id="downloadPdfBtn" disabled><i class="fas fa-file-pdf me-1"></i> Télécharger PDF</button>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-sm table-striped table-hover" style="font-size: 0.9rem;">
@@ -423,7 +448,6 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-            <button type="button" class="btn btn-primary">Sauvegarder les changements</button>
           </div>
         </div>
       </div>
