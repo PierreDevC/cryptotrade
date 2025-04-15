@@ -57,9 +57,9 @@ class TransactionController {
         // --- Check Sufficient Funds ---
          // Recalculate expected cost based on *current* price for safety check
          // (allow small discrepancy from modal price due to fluctuation)
-         $usdToCadRate = 1.35; // Get from config ideally
-         $currentPriceUSD = $currency['current_price_usd'];
-         $estimatedCostCAD = $quantity * $currentPriceUSD * $usdToCadRate;
+         // Get from config ideally
+         $currentPriceCAD = (float)$currency['current_price_usd'];
+         $estimatedCostCAD = $quantity * $currentPriceCAD;
 
          // Allow maybe 1% difference from the amount confirmed in modal
          if (abs($estimatedCostCAD - $amountCAD) / $amountCAD > 0.01) {
@@ -91,8 +91,8 @@ class TransactionController {
                 'currency_id' => $currencyId,
                 'type' => 'buy',
                 'quantity' => $quantity,
-                 // Use the price at the time of transaction for logging
-                'price_per_unit_usd' => $currentPriceUSD,
+                // Log the CAD price at the time of transaction (into the _usd column)
+                'price_per_unit_usd' => $currentPriceCAD,
                 'total_amount_cad' => $amountCAD
             ];
             $logged = $this->transactionModel->create($transactionData);
@@ -135,9 +135,9 @@ class TransactionController {
         }
 
          // Recalculate expected proceeds based on current price for safety check
-         $usdToCadRate = 1.35; // Get from config
-         $currentPriceUSD = $currency['current_price_usd'];
-         $estimatedProceedsCAD = $quantity * $currentPriceUSD * $usdToCadRate;
+         // Treat DB price as CAD
+         $currentPriceCAD = (float)$currency['current_price_usd'];
+         $estimatedProceedsCAD = $quantity * $currentPriceCAD;
 
          // Allow maybe 1% difference
           if (abs($estimatedProceedsCAD - $amountCAD) / $amountCAD > 0.01) {
@@ -164,7 +164,7 @@ class TransactionController {
                  'currency_id' => $currencyId,
                  'type' => 'sell',
                  'quantity' => $quantity,
-                 'price_per_unit_usd' => $currentPriceUSD, // Price at time of sale
+                 'price_per_unit_usd' => $currentPriceCAD, // Log CAD price at time of sale (into _usd column)
                  'total_amount_cad' => $amountCAD
              ];
              $logged = $this->transactionModel->create($transactionData);

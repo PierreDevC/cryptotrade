@@ -149,10 +149,7 @@
                 <div class="row g-4">
                     <div class="col-12 grid-item">
                         <h5 class="mb-3">Performance du Compte</h5>
-                        <div class="row"><div class="col-md-3 d-flex flex-column justify-content-center gap-3 mb-md-0 mb-4">
-                                <a href="#" class="action-button text-decoration-none" style="padding: 10px 15px; font-size: 13px; max-width: 180px; text-align: center; margin: 0 auto;"><i class="fa-solid fa-chart-line me-2"></i>Télécharger Analyses</a>
-                                <a href="#" class="action-button text-decoration-none" style="padding: 10px 15px; font-size: 13px; max-width: 180px; text-align: center; margin: 0 auto;"><i class="fa-solid fa-file-invoice me-2"></i>Télécharger Relevés</a>
-                        </div><div class="col-md-9"><div class="chart-container"><canvas id="cryptoChart"></canvas></div></div></div>
+                        <div class="row"><div class="col-12"><div class="chart-container"><canvas id="cryptoChart"></canvas></div></div></div>
                     </div>
                 </div>
                 <div class="row g-4"> <div class="col-12 grid-item">
@@ -170,6 +167,15 @@
                                 <h4 id="hiddenInvestment" class="fw-bold text-dark mb-0 d-none" style="font-family: sans-serif;">******$ CAD</h4>
                                 <p class="text-success mt-2 weekly-gain"><i class="fa-solid fa-spinner fa-spin me-1"></i> Chargement...</p>
                         </div></div>
+                        <!-- NEW Buttons -->
+                        <div class="d-flex justify-content-start gap-2 mt-4"> <!-- Added container for buttons -->
+                            <button id="viewTransactionsBtn" class="action-button" data-bs-toggle="modal" data-bs-target="#profileSettingsModal" style="padding: 8px 12px; font-size: 0.9rem;">
+                                <i class="fa-solid fa-list-check me-1"></i> Consulter Transactions
+                            </button>
+                            <button id="accountSettingsBtn" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#profileSettingsModal" style="padding: 8px 12px; font-size: 0.9rem;">
+                                <i class="fa-solid fa-gear me-1"></i> Paramètres du Compte
+                            </button>
+                        </div>
                 </div></div>
                 <div class="row g-4" id="holdings-section"> <div class="col-12 grid-item" id="holdings-card">
                         <h5>Mes Actifs</h5>
@@ -186,7 +192,7 @@
                         <div id="cryptoTradeForm" class="p-2"><div class="mb-3">
                                 <h6 id="selectedCryptoName">Sélectionnez une cryptomonnaie...</h6><p id="selectedCryptoPrice" class="text-muted mb-1">Prix actuel: --</p>
                         </div><div class="row g-3"><div class="col-md-6">
-                                    <label for="cryptoAmount" class="form-label">Montant (USD)</label><div class="input-group mb-3"><span class="input-group-text">$</span><input type="number" class="form-control" id="cryptoAmount" placeholder="0.00" step="0.01"></div>
+                                    <label for="cryptoAmount" class="form-label">Montant (CAD)</label><div class="input-group mb-3"><span class="input-group-text">$</span><input type="number" class="form-control" id="cryptoAmount" placeholder="0.00" step="0.01"><span class="input-group-text">CAD</span></div>
                         </div><div class="col-md-6">
                                     <label for="cryptoQuantity" class="form-label">Quantité</label><input type="number" class="form-control" id="cryptoQuantity" placeholder="0.00000000" step="any">
                         </div></div><div class="d-flex justify-content-start gap-2 mt-3">
@@ -198,7 +204,7 @@
                     <div class="col-12 grid-item" style="overflow-y: auto;" id="crypto-list-card">
                         <h5>Cryptomonnaies</h5>
                          <div class="table-responsive"><table class="table crypto-table"><thead><tr>
-                                        <th scope="col" style="width: 50px;"></th><th scope="col">#</th><th scope="col">Crypto</th><th scope="col">Price (USD)</th>
+                                        <th scope="col" style="width: 50px;"></th><th scope="col">#</th><th scope="col">Crypto</th><th scope="col">Price (CAD)</th>
                                         <th scope="col">24h Change</th><th scope="col">Market Cap</th><th scope="col">Graphique</th>
                                         <th scope="col">Action</th>
                         </tr></thead><tbody id="cryptoListTableBody"><tr class="loading-placeholder"><td colspan="8">Chargement des cryptomonnaies... <i class="fas fa-spinner fa-spin"></i></td></tr></tbody></table></div>
@@ -222,7 +228,7 @@
                         <li><strong>Action :</strong> <span id="confirmAction"></span></li>
                         <li><strong>Crypto :</strong> <span id="confirmCryptoName"></span> (<span id="confirmCryptoSymbol"></span>)</li>
                         <li><strong>Quantité :</strong> <span id="confirmQuantity"></span></li>
-                        <li><strong>Prix Unitaire Estimé (USD) :</strong> <span id="confirmPriceUsd"></span></li>
+                        <li><strong>Prix Unitaire Estimé (CAD) :</strong> <span id="confirmPrice"></span></li>
                         <li><strong>Valeur Totale Estimée (CAD) :</strong> <span id="confirmAmountCad"></span></li>
                     </ul>
                     <div id="confirmationError" class="alert alert-danger d-none mt-3"></div>
@@ -352,7 +358,7 @@
                         </div>
                          <div class="row g-3 mb-3">
                             <div class="col-md-6">
-                                <label for="adminCurrencyPrice" class="form-label">Prix Actuel (USD)</label>
+                                <label for="adminCurrencyPrice" class="form-label">Prix Actuel (CAD)</label>
                                 <input type="number" step="any" class="form-control" id="adminCurrencyPrice" required>
                             </div>
                             <div class="col-md-6">
@@ -362,7 +368,7 @@
                         </div>
                          <div class="row g-3 mb-3">
                              <div class="col-md-6">
-                                <label for="adminCurrencyMarketCap" class="form-label">Market Cap (USD)</label>
+                                <label for="adminCurrencyMarketCap" class="form-label">Market Cap (CAD)</label>
                                 <input type="number" step="any" class="form-control" id="adminCurrencyMarketCap" required>
                             </div>
                              <div class="col-md-6">
@@ -400,7 +406,7 @@
                                 <th scope="col">Type</th>
                                 <th scope="col">Crypto</th>
                                 <th scope="col">Quantité</th>
-                                <th scope="col">Prix/Unité (USD)</th>
+                                <th scope="col">Prix/Unité (CAD)</th>
                                 <th scope="col">Montant Total (CAD)</th>
                             </tr>
                         </thead>

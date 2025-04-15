@@ -49,11 +49,11 @@ class DashboardController {
         $portfolioChange24hCAD = 0;   // Change in crypto assets value over 24h
         $holdingsFormatted = [];
         // TODO: Get from config or API (e.g., App\Config::get('rates.usd_to_cad'))
-        $usdToCadRate = 1.35;
 
         foreach ($holdingsRaw as $holding) {
-            $currentValueUSD = $holding['quantity'] * $holding['current_price_usd'];
-            $currentValueCAD = $currentValueUSD * $usdToCadRate;
+            // Treat DB price as CAD now
+            $currentPriceCAD = (float)$holding['current_price_usd']; // Treat the DB value as CAD
+            $currentValueCAD = $holding['quantity'] * $currentPriceCAD;
             $portfolioValueCryptoCAD += $currentValueCAD;
 
             // Fetch full currency details to get change %
@@ -62,8 +62,9 @@ class DashboardController {
 
             // Calculate the change in CAD value for this specific holding over 24h
             // Price 24h ago = current_price / (1 + change_24h_percent / 100)
-            $price24hAgoUSD = $change24hPercent != -100 ? $holding['current_price_usd'] / (1 + $change24hPercent / 100) : 0;
-            $value24hAgoCAD = ($holding['quantity'] * $price24hAgoUSD) * $usdToCadRate;
+            // Calculate previous price assuming current price is CAD
+            $price24hAgoCAD = $change24hPercent != -100 ? $currentPriceCAD / (1 + $change24hPercent / 100) : 0;
+            $value24hAgoCAD = $holding['quantity'] * $price24hAgoCAD;
             $changeValueCAD = $currentValueCAD - $value24hAgoCAD;
             $portfolioChange24hCAD += $changeValueCAD;
 
@@ -73,8 +74,9 @@ class DashboardController {
                 'currency_id' => (int)$holding['currency_id'],
                 'quantity_raw' => (float)$holding['quantity'],
                 'quantity' => number_format($holding['quantity'], 8, '.', ''), // Raw quantity might be useful too
-                'current_price_usd_formatted' => '$' . number_format($holding['current_price_usd'], 2, '.', ','),
-                'current_price_cad_formatted' => '$' . number_format($holding['current_price_usd'] * $usdToCadRate, 2, '.', ','),
+                // Add raw price for JS and format the CAD price
+                'current_price_cad_raw' => $currentPriceCAD, // Send raw CAD price
+                'current_price_cad_formatted' => number_format($currentPriceCAD, 2, '.', ',') . '$ CAD',
                 'total_value_cad_formatted' => '$' . number_format($currentValueCAD, 2, '.', ','),
                 'total_value_cad_raw' => $currentValueCAD,
                 'currency_change_24h_percent' => $change24hPercent, // Renamed for clarity
@@ -115,6 +117,8 @@ class DashboardController {
                   'symbol' => $tx['currency_symbol'],
                   'quantity' => number_format($tx['quantity'], 6, '.', ''),
                   'total_amount_cad' => number_format($tx['total_amount_cad'], 2, '.', ','),
+                  // Add price per unit (assuming it's stored as USD but represents CAD now)
+                  'price_per_unit_cad' => (float)$tx['price_per_unit_usd'],
                   'timestamp' => date('Y-m-d H:i', strtotime($tx['timestamp']))
              ];
         }

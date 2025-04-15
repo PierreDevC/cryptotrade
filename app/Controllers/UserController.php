@@ -139,8 +139,8 @@ class UserController {
                   'currency_name' => $tx['currency_name'],
                   'currency_symbol' => $tx['currency_symbol'],
                   'quantity' => number_format((float)$tx['quantity'], 8, '.', ''),
-                  //'quantity_display' => $quantitySign . number_format((float)$tx['quantity'], 8, '.', ''),
-                  'price_per_unit_usd' => number_format((float)$tx['price_per_unit_usd'], 2, '.', ','),
+                  // Provide the raw CAD price (from the _usd column) for JS formatting
+                  'price_per_unit_cad' => (float)$tx['price_per_unit_usd'],
                   'total_amount_cad' => number_format((float)$tx['total_amount_cad'], 2, '.', ','),
                   'total_amount_cad_display' => $amountSign . number_format((float)$tx['total_amount_cad'], 2, '.', ',') . '$',
                   'type_class' => ($tx['type'] == 'buy') ? 'text-danger' : 'text-success' // Class for styling
@@ -166,7 +166,7 @@ class UserController {
         $output = fopen('php://output', 'w');
 
         // Output the CSV header row
-        fputcsv($output, ['Date', 'Type', 'Crypto Name', 'Symbol', 'Quantity', 'Price Per Unit (USD)', 'Total Amount (CAD)']);
+        fputcsv($output, ['Date', 'Type', 'Crypto Name', 'Symbol', 'Quantity', 'Price Per Unit (CAD)', 'Total Amount (CAD)']);
 
         // Output data rows
         foreach ($transactions as $tx) {
@@ -176,7 +176,7 @@ class UserController {
                 $tx['currency_name'],
                 $tx['currency_symbol'],
                 number_format((float)$tx['quantity'], 8, '.', ''), // Raw quantity
-                number_format((float)$tx['price_per_unit_usd'], 2, '.', ''), // Raw price
+                number_format((float)$tx['price_per_unit_usd'], 2, '.', ''), // Raw price (representing CAD)
                 number_format((float)$tx['total_amount_cad'], 2, '.', '') // Raw amount
             ]);
         }

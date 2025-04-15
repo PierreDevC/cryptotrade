@@ -1,7 +1,6 @@
 // PASTEBIN_DISABLED
 document.addEventListener('DOMContentLoaded', function() {
     const API_BASE_URL = '/cryptotrade/api'; // Use root-relative path
-    const USD_TO_CAD_RATE = 1.35; // TODO: Fetch this from config or API
 
     // --- Selectors ---
     const accountTypeEl = document.querySelector('.account-type');
@@ -58,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const confirmCryptoNameEl = document.getElementById('confirmCryptoName');
     const confirmCryptoSymbolEl = document.getElementById('confirmCryptoSymbol');
     const confirmQuantityEl = document.getElementById('confirmQuantity');
-    const confirmPriceUsdEl = document.getElementById('confirmPriceUsd');
+    const confirmPriceEl = document.getElementById('confirmPrice');
     const confirmAmountCadEl = document.getElementById('confirmAmountCad');
     const confirmErrorEl = document.getElementById('confirmationError');
     const confirmTransactionBtn = document.getElementById('confirmTransactionBtn');
@@ -87,6 +86,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const holdingsCard = document.getElementById('holdings-card');
     const profileHistoryTabBtn = document.getElementById('profile-history-tab');
 
+    // --- NEW: Account Detail Buttons ---
+    const viewTransactionsBtn = document.getElementById('viewTransactionsBtn');
+    const accountSettingsBtn = document.getElementById('accountSettingsBtn');
+    const profileUserTabBtn = document.getElementById('profile-user-tab'); // Selector for the user info tab button
+
     let balanceVisible = true;
     let userBalanceRaw = 0;
     let selectedCryptoForTrade = null;
@@ -104,10 +108,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof value !== 'number' || isNaN(value)) return 'N/A';
         return new Intl.NumberFormat('fr-CA', { style: 'currency', currency: currency }).format(value);
     }
-    function formatUsd(value) {
-        if (typeof value !== 'number' || isNaN(value)) return 'N/A';
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
-    }
     function getChangeClass(value) {
         const numValue = parseFloat(value);
         if (numValue > 0) return 'text-success';
@@ -119,30 +119,30 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateTradeForm(source) {
         if (!selectedCryptoForTrade || !amountInput || !quantityInput) return;
 
-        const priceUsd = selectedCryptoForTrade.priceUsd;
-        let amountUsd = parseFloat(amountInput.value);
+        const priceCad = selectedCryptoForTrade.priceCad;
+        let amountCad = parseFloat(amountInput.value);
         let quantity = parseFloat(quantityInput.value);
 
         if (source === 'amount') {
-            if (!isNaN(amountUsd) && amountUsd > 0 && priceUsd > 0) {
-                quantity = amountUsd / priceUsd;
+            if (!isNaN(amountCad) && amountCad > 0 && priceCad > 0) {
+                quantity = amountCad / priceCad;
                 quantityInput.value = quantity.toFixed(8); // Adjust precision as needed
             } else if (amountInput.value === '') {
                  quantityInput.value = '';
             }
         } else if (source === 'quantity') {
-            if (!isNaN(quantity) && quantity > 0 && priceUsd > 0) {
-                amountUsd = quantity * priceUsd;
-                amountInput.value = amountUsd.toFixed(2);
+            if (!isNaN(quantity) && quantity > 0 && priceCad > 0) {
+                amountCad = quantity * priceCad;
+                amountInput.value = amountCad.toFixed(2);
             } else if (quantityInput.value === '') {
                  amountInput.value = '';
             }
         }
 
         // Enable/Disable buttons
-        const finalAmount = parseFloat(amountInput.value);
+        const finalAmountCad = parseFloat(amountInput.value);
         const finalQuantity = parseFloat(quantityInput.value);
-        const isValid = !isNaN(finalAmount) && finalAmount > 0 && !isNaN(finalQuantity) && finalQuantity > 0;
+        const isValid = !isNaN(finalAmountCad) && finalAmountCad > 0 && !isNaN(finalQuantity) && finalQuantity > 0;
 
         if(buyButton) buyButton.disabled = !isValid;
         if(sellButton) sellButton.disabled = !isValid;
@@ -261,14 +261,17 @@ document.addEventListener('DOMContentLoaded', function() {
              // DEBUG: Log the price value and type from the API
              console.log(`Crypto: ${crypto.symbol}, price_usd_raw:`, crypto.price_usd_raw, `(Type: ${typeof crypto.price_usd_raw})`);
 
+             // TODO: API should return price_cad_raw now
+             console.log(`Crypto: ${crypto.symbol}, price_cad_raw:`, crypto.price_cad_raw, `(Type: ${typeof crypto.price_cad_raw})`);
+
              const changeClass = getChangeClass(crypto.change_24h_raw);
              const chartId = `miniChart-${crypto.symbol}`;
              const row = `
-                 <tr style=\"cursor: pointer;\" class=\"crypto-list-row\" data-crypto-id=\"${crypto.id}\" data-crypto-name=\"${crypto.name}\" data-crypto-price-usd=\"${crypto.price_usd_raw}\" data-crypto-symbol=\"${crypto.symbol}\">
+                 <tr style=\"cursor: pointer;\" class=\"crypto-list-row\" data-crypto-id=\"${crypto.id}\" data-crypto-name=\"${crypto.name}\" data-crypto-price-cad=\"${crypto.price_cad_raw}\" data-crypto-symbol=\"${crypto.symbol}\">
                      <td class=\"align-middle\"><img src=\"${crypto.image_url || 'https://via.placeholder.com/20'}\" alt=\"${crypto.symbol || ''}\" width=\"20\" height=\"20\"></td>
                      <td class=\"align-middle\">${crypto.rank || '#'}</td>
                      <td class=\"align-middle\">${crypto.name || 'N/A'} <small class=\"text-muted\">(${crypto.symbol || 'N/A'})</small></td>
-                     <td class=\"align-middle\">${formatUsd(crypto.price_usd_raw)}</td>
+                     <td class=\"align-middle\">${formatCurrency(crypto.price_cad_raw)}</td>
                      <td class=\"align-middle ${changeClass}\">${crypto.change_24h || 'N/A'}</td>
                      <td class=\"align-middle\">${crypto.market_cap || 'N/A'}</td>
                      <td class=\"align-middle\" style=\"width: 100px; height: 40px;\"><canvas id=\"${chartId}\" style=\"max-height: 40px;\"></canvas></td>
@@ -278,6 +281,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                  data-bs-target=\"#cryptoChartModal\"  /* <<< Vérifiez cet attribut */
                                  data-crypto-id=\"${crypto.id}\"
                                  data-crypto-name=\"${crypto.name}\"
+                                 data-crypto-price-cad=\"${crypto.price_cad_raw}\"
                                  data-crypto-symbol=\"${crypto.symbol}\"
                                  title=\"Voir graphique détaillé\">
                              <i class=\"fas fa-chart-line\"></i>
@@ -285,14 +289,14 @@ document.addEventListener('DOMContentLoaded', function() {
                          <button class=\"btn btn-sm btn-outline-success buy-btn-quick ms-1\" title=\"Acheter ${crypto.symbol}\"
                                  data-crypto-id=\"${crypto.id}\"
                                  data-crypto-name=\"${crypto.name}\"
-                                 data-crypto-price-usd=\"${crypto.price_usd_raw}\"
+                                 data-crypto-price-cad=\"${crypto.price_cad_raw}\"
                                  data-crypto-symbol=\"${crypto.symbol}\">
                              <i class=\"fas fa-shopping-cart\"></i>
                          </button>
                          <button class=\"btn btn-sm btn-outline-danger sell-btn-quick ms-1\" title=\"Vendre ${crypto.symbol}\"
                                  data-crypto-id=\"${crypto.id}\"
                                  data-crypto-name=\"${crypto.name}\"
-                                 data-crypto-price-usd=\"${crypto.price_usd_raw}\"
+                                 data-crypto-price-cad=\"${crypto.price_cad_raw}\"
                                  data-crypto-symbol=\"${crypto.symbol}\">
                              <i class=\"fas fa-dollar-sign\"></i>
                          </button>
@@ -340,9 +344,9 @@ document.addEventListener('DOMContentLoaded', function() {
                      cryptoListTableBody.querySelector('tr.table-active')?.classList.remove('table-active');
                      row.classList.add('table-active');
                      // Populate the trade form
-                     selectedCryptoForTrade = { id: button.dataset.cryptoId, name: button.dataset.cryptoName, priceUsd: parseFloat(button.dataset.cryptoPriceUsd), symbol: button.dataset.cryptoSymbol };
+                     selectedCryptoForTrade = { id: button.dataset.cryptoId, name: button.dataset.cryptoName, priceCad: parseFloat(button.dataset.cryptoPriceCad), symbol: button.dataset.cryptoSymbol };
                      if (nameElBuySell) nameElBuySell.textContent = `${selectedCryptoForTrade.name} (${selectedCryptoForTrade.symbol})`;
-                     if (priceElBuySell) priceElBuySell.textContent = `Prix actuel: ${formatUsd(selectedCryptoForTrade.priceUsd)}`;
+                     if (priceElBuySell) priceElBuySell.textContent = `Prix actuel: ${formatCurrency(selectedCryptoForTrade.priceCad)}`;
                      if (amountInput) amountInput.value = ''; if (quantityInput) quantityInput.value = '';
                      if (buyButton) buyButton.disabled = true; // Will be enabled by input
                      if (sellButton) sellButton.disabled = true; // Will be enabled by input
@@ -368,9 +372,9 @@ document.addEventListener('DOMContentLoaded', function() {
                  // Original row selection logic
                  cryptoListTableBody.querySelector('tr.table-active')?.classList.remove('table-active');
                  row.classList.add('table-active');
-                 selectedCryptoForTrade = { id: row.dataset.cryptoId, name: row.dataset.cryptoName, priceUsd: parseFloat(row.dataset.cryptoPriceUsd), symbol: row.dataset.cryptoSymbol };
+                 selectedCryptoForTrade = { id: row.dataset.cryptoId, name: row.dataset.cryptoName, priceCad: parseFloat(row.dataset.cryptoPriceCad), symbol: row.dataset.cryptoSymbol };
                  if (nameElBuySell) nameElBuySell.textContent = `${selectedCryptoForTrade.name} (${selectedCryptoForTrade.symbol})`;
-                 if (priceElBuySell) priceElBuySell.textContent = `Prix actuel: ${formatUsd(selectedCryptoForTrade.priceUsd)}`;
+                 if (priceElBuySell) priceElBuySell.textContent = `Prix actuel: ${formatCurrency(selectedCryptoForTrade.priceCad)}`;
                  if (amountInput) amountInput.value = ''; if (quantityInput) quantityInput.value = '';
                  if (buyButton) buyButton.disabled = false; if (sellButton) sellButton.disabled = false;
                  if (tradeInfoEl) tradeInfoEl.classList.add('d-none');
@@ -411,8 +415,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const chartData = result.data;
                 const ctx = modalChartCanvas.getContext('2d');
                 modalChartInstance = new Chart(ctx, {
-                    type: 'line', data: { labels: chartData.labels, datasets: [{ label: `Prix (${cryptoSymbol} - USD)`, data: chartData.datasets[0].data, borderColor: chartData.datasets[0].borderColor || '#0d6efd', backgroundColor: chartData.datasets[0].backgroundColor || 'rgba(13, 110, 253, 0.1)', tension: chartData.datasets[0].tension || 0.3, fill: chartData.datasets[0].fill !== undefined ? chartData.datasets[0].fill : true, pointRadius: 2, pointHoverRadius: 5 }] },
-                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false, ticks: { callback: value => formatUsd(value) } } }, plugins: { legend: { display: true }, tooltip: { callbacks: { label: context => context.parsed.y !== null ? formatUsd(context.parsed.y) : '' } } } }
+                    type: 'line', data: { labels: chartData.labels, datasets: [{ label: `Prix (${cryptoSymbol} - CAD)`, data: chartData.datasets[0].data, borderColor: chartData.datasets[0].borderColor || '#0d6efd', backgroundColor: chartData.datasets[0].backgroundColor || 'rgba(13, 110, 253, 0.1)', tension: chartData.datasets[0].tension || 0.3, fill: chartData.datasets[0].fill !== undefined ? chartData.datasets[0].fill : true, pointRadius: 2, pointHoverRadius: 5 }] },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false, ticks: { callback: value => formatCurrency(value) } } }, plugins: { legend: { display: true }, tooltip: { callbacks: { label: context => context.parsed.y !== null ? formatCurrency(context.parsed.y) : '' } } } }
                 });
                 modalChartLoadingEl.classList.add('d-none');
                 modalChartContainerEl.classList.remove('d-none');
@@ -590,12 +594,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const action = button.id === 'buyButton' ? 'Acheter' : 'Vendre';
                 const quantity = parseFloat(quantityInput.value);
-                const amountUsd = parseFloat(amountInput.value);
-                const priceUsd = selectedCryptoForTrade.priceUsd;
-                const amountCAD = amountUsd * USD_TO_CAD_RATE; // Use calculated USD amount * rate
+                const amountCad = parseFloat(amountInput.value);
+                const priceCad = selectedCryptoForTrade.priceCad;
 
                 // --- Basic Client-Side Validation ---
-                if (isNaN(quantity) || quantity <= 0 || isNaN(amountCAD) || amountCAD <= 0) {
+                if (isNaN(quantity) || quantity <= 0 || isNaN(amountCad) || amountCad <= 0) {
                     if (tradeInfoEl && tradeInfoTextEl) {
                         tradeInfoTextEl.textContent = "Veuillez entrer un montant ou une quantité valide.";
                         tradeInfoEl.className = 'alert alert-warning mt-3'; // Show warning
@@ -604,9 +607,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 // Check sufficient CAD balance for BUY
-                if (action === 'Acheter' && userBalanceRaw < amountCAD) {
+                if (action === 'Acheter' && userBalanceRaw < amountCad) {
                     if (tradeInfoEl && tradeInfoTextEl) {
-                        tradeInfoTextEl.textContent = `Solde insuffisant. Vous avez ${formatCurrency(userBalanceRaw)}, besoin de ${formatCurrency(amountCAD)}.`;
+                        tradeInfoTextEl.textContent = `Solde insuffisant. Vous avez ${formatCurrency(userBalanceRaw)}, besoin de ${formatCurrency(amountCad)}.`;
                         tradeInfoEl.className = 'alert alert-danger mt-3'; // Show error
                     }
                     return;
@@ -624,8 +627,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (confirmCryptoNameEl) confirmCryptoNameEl.textContent = selectedCryptoForTrade.name;
                 if (confirmCryptoSymbolEl) confirmCryptoSymbolEl.textContent = selectedCryptoForTrade.symbol;
                 if (confirmQuantityEl) confirmQuantityEl.textContent = quantity.toFixed(8);
-                if (confirmPriceUsdEl) confirmPriceUsdEl.textContent = formatUsd(priceUsd);
-                if (confirmAmountCadEl) confirmAmountCadEl.textContent = formatCurrency(amountCAD);
+                if (confirmPriceEl) confirmPriceEl.textContent = formatCurrency(priceCad);
+                if (confirmAmountCadEl) confirmAmountCadEl.textContent = formatCurrency(amountCad);
                 if (confirmErrorEl) confirmErrorEl.classList.add('d-none'); // Clear previous errors
 
                 // Store details for the confirmation button
@@ -633,7 +636,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     confirmTransactionBtn.dataset.action = action;
                     confirmTransactionBtn.dataset.currencyId = selectedCryptoForTrade.id;
                     confirmTransactionBtn.dataset.quantity = quantity;
-                    confirmTransactionBtn.dataset.amountCad = amountCAD; // Store CAD value
+                    confirmTransactionBtn.dataset.amountCAD = amountCad; // Store CAD value
                 }
 
                 confirmationModal.show();
@@ -648,7 +651,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 action: this.dataset.action,
                 currencyId: parseInt(this.dataset.currencyId, 10),
                 quantity: parseFloat(this.dataset.quantity),
-                amountCAD: parseFloat(this.dataset.amountCad)
+                amountCAD: parseFloat(this.dataset.amountCAD)
             };
             if (!details.action || isNaN(details.currencyId) || isNaN(details.quantity) || isNaN(details.amountCAD)) {
                 console.error("Données de confirmation invalides", details);
@@ -755,9 +758,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (adminCurrencyIdInput) adminCurrencyIdInput.value = details.id;
                 if (adminCurrencyNameInput) adminCurrencyNameInput.value = details.name || '';
                 if (adminCurrencySymbolInput) adminCurrencySymbolInput.value = details.symbol || '';
-                if (adminCurrencyPriceInput) adminCurrencyPriceInput.value = details.current_price_usd || '';
+                if (adminCurrencyPriceInput) adminCurrencyPriceInput.value = details.current_price_cad || '';
                 if (adminCurrencyChangeInput) adminCurrencyChangeInput.value = details.change_24h_percent || '';
-                if (adminCurrencyMarketCapInput) adminCurrencyMarketCapInput.value = details.market_cap_usd || '';
+                if (adminCurrencyMarketCapInput) adminCurrencyMarketCapInput.value = details.market_cap_cad || '';
                 if (adminCurrencyVolatilityInput) adminCurrencyVolatilityInput.value = details.base_volatility || '';
                 if (adminCurrencyTrendInput) adminCurrencyTrendInput.value = details.base_trend || '';
 
@@ -803,9 +806,9 @@ document.addEventListener('DOMContentLoaded', function() {
              const currencyData = {
                  name: adminCurrencyNameInput.value,
                  symbol: adminCurrencySymbolInput.value,
-                 current_price_usd: adminCurrencyPriceInput.value,
+                 current_price_cad: adminCurrencyPriceInput.value,
                  change_24h_percent: adminCurrencyChangeInput.value,
-                 market_cap_usd: adminCurrencyMarketCapInput.value,
+                 market_cap_cad: adminCurrencyMarketCapInput.value,
                  base_volatility: adminCurrencyVolatilityInput.value,
                  base_trend: adminCurrencyTrendInput.value
              };
@@ -858,9 +861,9 @@ document.addEventListener('DOMContentLoaded', function() {
              const currencyData = {
                  name: adminCurrencyNameInput.value,
                  symbol: adminCurrencySymbolInput.value,
-                 current_price_usd: adminCurrencyPriceInput.value,
+                 current_price_cad: adminCurrencyPriceInput.value,
                  change_24h_percent: adminCurrencyChangeInput.value,
-                 market_cap_usd: adminCurrencyMarketCapInput.value,
+                 market_cap_cad: adminCurrencyMarketCapInput.value,
                  base_volatility: adminCurrencyVolatilityInput.value,
                  base_trend: adminCurrencyTrendInput.value
              };
@@ -1048,7 +1051,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         navbarDropdownButton.textContent = buttonText;
                         // Re-add the icon
                         let icon = document.createElement('i');
-                        icon.className = 'fa-solid fa-user ms-2'; // Add margin if needed
+                        icon.className = 'fa-solid fa-user ms-2';
                         navbarDropdownButton.appendChild(icon);
                      }
                 }
@@ -1100,7 +1103,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <td class="${tx.type_class || ''}">${tx.type || 'N/A'}</td>
                     <td>${tx.currency_name || 'N/A'} (${tx.currency_symbol || 'N/A'})</td>
                     <td>${tx.quantity || 'N/A'}</td>
-                    <td>$${tx.price_per_unit_usd || 'N/A'}</td>
+                    <td>${formatCurrency(tx.price_per_unit_cad) || 'N/A'}</td>
                     <td class="${tx.type_class || ''} fw-bold">${tx.total_amount_cad_display || 'N/A'}</td>
                 </tr>`;
             transactionHistoryTableBody.insertAdjacentHTML('beforeend', row);
@@ -1238,6 +1241,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.warn('Sell All: User does not own the selected crypto or quantity is zero.');
                 quantityInput.value = ''; // Clear quantity if they don't own it
                 updateTradeForm('quantity');
+            }
+        });
+    }
+
+    // --- NEW: Account Detail Button Listeners ---
+    // Open modal to History tab
+    if (viewTransactionsBtn && profileSettingsModalEl && profileHistoryTabBtn) {
+        viewTransactionsBtn.addEventListener('click', function() {
+             // Modal toggle is handled by data attributes, we just need to switch tab
+            const historyTabInstance = bootstrap.Tab.getInstance(profileHistoryTabBtn) || new bootstrap.Tab(profileHistoryTabBtn);
+            if (historyTabInstance) {
+                historyTabInstance.show();
+            }
+        });
+    }
+
+    // Open modal to User Info tab
+    if (accountSettingsBtn && profileSettingsModalEl && profileUserTabBtn) {
+        accountSettingsBtn.addEventListener('click', function() {
+            // Modal toggle is handled by data attributes, we just need to switch tab
+            const userTabInstance = bootstrap.Tab.getInstance(profileUserTabBtn) || new bootstrap.Tab(profileUserTabBtn);
+            if (userTabInstance) {
+                userTabInstance.show();
             }
         });
     }

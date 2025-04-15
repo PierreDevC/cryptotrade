@@ -37,12 +37,12 @@ class MarketController {
                  'rank' => $rank++,
                  'name' => $currency['name'],
                  'symbol' => $currency['symbol'],
-                 'price_usd' => number_format((float)$currency['current_price_usd'], 2, '.', ','),
-                 'price_usd_raw' => (float)$currency['current_price_usd'],
+                 'price_cad_raw' => (float)$currency['current_price_usd'],
+                 'price_cad_formatted' => number_format((float)$currency['current_price_usd'], 2, '.', ',') . '$ CAD',
                  'change_24h' => number_format((float)$currency['change_24h_percent'], 2) . '%',
                  'change_24h_raw' => (float)$currency['change_24h_percent'],
                  'market_cap' => $this->formatMarketCap((float)$currency['market_cap_usd']),
-                 'market_cap_raw' => (float)$currency['market_cap_usd'],
+                 'market_cap_cad_raw' => (float)$currency['market_cap_usd'],
                  'image_url' => $this->getCryptoImageUrl($currency['symbol'])
              ];
         }
@@ -85,7 +85,7 @@ class MarketController {
         $response = [
             'labels' => $chartData['labels'],
             'datasets' => [[
-                'label' => 'Price (' . $currency['symbol'] . ' - USD)',
+                'label' => 'Price (' . $currency['symbol'] . ' - CAD)',
                 'data' => $chartData['prices'],
                  'borderColor' => '#2d3a36',
                  'backgroundColor' => 'rgba(45, 58, 54, 0.1)',

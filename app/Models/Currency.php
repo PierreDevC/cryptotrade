@@ -66,9 +66,9 @@ class Currency {
 
         $stmt->bindParam(':name', $data['name']);
         $stmt->bindParam(':symbol', $data['symbol']);
-        $stmt->bindParam(':price', $data['current_price_usd']);
+        $stmt->bindParam(':price', $data['current_price_cad']);
         $stmt->bindParam(':change', $data['change_24h_percent']);
-        $stmt->bindParam(':market_cap', $data['market_cap_usd']);
+        $stmt->bindParam(':market_cap', $data['market_cap_cad']);
         $stmt->bindParam(':volatility', $data['base_volatility']);
         $stmt->bindParam(':trend', $data['base_trend']);
 
@@ -91,9 +91,9 @@ class Currency {
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->bindParam(':name', $data['name']);
         $stmt->bindParam(':symbol', $data['symbol']);
-        $stmt->bindParam(':price', $data['current_price_usd']);
+        $stmt->bindParam(':price', $data['current_price_cad']);
         $stmt->bindParam(':change', $data['change_24h_percent']);
-        $stmt->bindParam(':market_cap', $data['market_cap_usd']);
+        $stmt->bindParam(':market_cap', $data['market_cap_cad']);
         $stmt->bindParam(':volatility', $data['base_volatility']);
         $stmt->bindParam(':trend', $data['base_trend']);
 

@@ -43,7 +43,10 @@ class AdminController {
             return [
                 'id' => (int)$c['id'],
                 'name' => $c['name'],
-                'symbol' => $c['symbol']
+                'symbol' => $c['symbol'],
+                // Add CAD price/market cap for consistency if needed by admin UI directly
+                // 'current_price_cad' => (float)$c['current_price_usd'],
+                // 'market_cap_cad' => (float)$c['market_cap_usd']
             ];
         }, $currencies);
         $this->jsonResponse(true, 'Currencies fetched', $formatted);
@@ -71,6 +74,10 @@ class AdminController {
         $currency['base_volatility'] = (float)$currency['base_volatility'];
         $currency['base_trend'] = (float)$currency['base_trend'];
 
+        // Add explicit _cad fields for clarity, taking value from _usd column
+        $currency['current_price_cad'] = (float)$currency['current_price_usd'];
+        $currency['market_cap_cad'] = (float)$currency['market_cap_usd'];
+
         $this->jsonResponse(true, 'Currency details fetched', $currency);
     }
 
@@ -81,7 +88,7 @@ class AdminController {
         $data = $request->getBody();
 
         // Basic Validation (Add more robust validation as needed)
-        if (empty($data['name']) || empty($data['symbol']) || !isset($data['current_price_usd']) || !isset($data['change_24h_percent']) || !isset($data['market_cap_usd']) || !isset($data['base_volatility']) || !isset($data['base_trend'])) {
+        if (empty($data['name']) || empty($data['symbol']) || !isset($data['current_price_cad']) || !isset($data['change_24h_percent']) || !isset($data['market_cap_cad']) || !isset($data['base_volatility']) || !isset($data['base_trend'])) {
             return $this->jsonResponse(false, 'Missing required fields.', null, 400);
         }
 
@@ -89,9 +96,9 @@ class AdminController {
         $currencyData = [
             'name' => filter_var($data['name'], FILTER_SANITIZE_STRING),
             'symbol' => strtoupper(filter_var($data['symbol'], FILTER_SANITIZE_STRING)),
-            'current_price_usd' => filter_var($data['current_price_usd'], FILTER_VALIDATE_FLOAT),
+            'current_price_cad' => filter_var($data['current_price_cad'], FILTER_VALIDATE_FLOAT),
             'change_24h_percent' => filter_var($data['change_24h_percent'], FILTER_VALIDATE_FLOAT),
-            'market_cap_usd' => filter_var($data['market_cap_usd'], FILTER_VALIDATE_FLOAT),
+            'market_cap_cad' => filter_var($data['market_cap_cad'], FILTER_VALIDATE_FLOAT),
             'base_volatility' => filter_var($data['base_volatility'], FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION),
             'base_trend' => filter_var($data['base_trend'], FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION),
         ];
@@ -134,7 +141,7 @@ class AdminController {
         }
 
         // Basic Validation
-        if (empty($data['name']) || empty($data['symbol']) || !isset($data['current_price_usd']) || !isset($data['change_24h_percent']) || !isset($data['market_cap_usd']) || !isset($data['base_volatility']) || !isset($data['base_trend'])) {
+        if (empty($data['name']) || empty($data['symbol']) || !isset($data['current_price_cad']) || !isset($data['change_24h_percent']) || !isset($data['market_cap_cad']) || !isset($data['base_volatility']) || !isset($data['base_trend'])) {
             return $this->jsonResponse(false, 'Missing required fields.', null, 400);
         }
 
@@ -142,9 +149,9 @@ class AdminController {
         $currencyData = [
             'name' => filter_var($data['name'], FILTER_SANITIZE_STRING),
             'symbol' => strtoupper(filter_var($data['symbol'], FILTER_SANITIZE_STRING)),
-            'current_price_usd' => filter_var($data['current_price_usd'], FILTER_VALIDATE_FLOAT),
+            'current_price_cad' => filter_var($data['current_price_cad'], FILTER_VALIDATE_FLOAT),
             'change_24h_percent' => filter_var($data['change_24h_percent'], FILTER_VALIDATE_FLOAT),
-            'market_cap_usd' => filter_var($data['market_cap_usd'], FILTER_VALIDATE_FLOAT),
+            'market_cap_cad' => filter_var($data['market_cap_cad'], FILTER_VALIDATE_FLOAT),
             'base_volatility' => filter_var($data['base_volatility'], FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION),
             'base_trend' => filter_var($data['base_trend'], FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION),
         ];
