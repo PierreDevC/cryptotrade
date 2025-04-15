@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Selectors ---
     const accountTypeEl = document.querySelector('.account-type');
     const accountStatusEl = document.querySelector('.account-status');
-    const accountLastLoginEl = document.querySelector('.account-last-login strong');
+    const accountLastLoginEl = document.getElementById('lastLoginValue');
     const balanceAmountEl = document.getElementById('balanceAmount');
     const hiddenBalanceEl = document.getElementById('hiddenBalance');
     const toggleBalanceBtn = document.getElementById('toggleBalance');
@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const portfolioTotalValueEl = document.getElementById('portfolioTotalValue');
     const portfolioCryptoValueEl = document.getElementById('portfolioCryptoValue');
     const portfolioChange24hEl = document.getElementById('portfolioChange24h');
+    const investmentAmountEl = document.getElementById('investmentAmount');
+    const hiddenInvestmentEl = document.getElementById('hiddenInvestment');
     const holdingsTableBody = document.getElementById('holdingsTableBody');
     const cryptoListTableBody = document.getElementById('cryptoListTableBody');
     const cryptoChartModalEl = document.getElementById('cryptoChartModal'); // <<< VERIFIER que cet ID existe dans dashboard.php
@@ -28,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const sellButton = document.getElementById('sellButton');
     const amountInput = document.getElementById('cryptoAmount');
     const quantityInput = document.getElementById('cryptoQuantity');
+    const sellAllButton = document.getElementById('sellAllButton'); // NEW: Sell All Button Selector
     const tradeInfoEl = document.getElementById('tradeInfo');
     const tradeInfoTextEl = document.getElementById('tradeInfoText');
 
@@ -76,11 +79,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const downloadCsvBtn = document.getElementById('downloadCsvBtn');
     const downloadPdfBtn = document.getElementById('downloadPdfBtn');
 
+    // --- NEW: Navbar Links & Target Cards for Effects ---
+    const navLinkCryptos = document.getElementById('nav-link-cryptos');
+    const navLinkHoldings = document.getElementById('nav-link-holdings');
+    const navLinkTransactions = document.getElementById('nav-link-transactions');
+    const cryptoListCard = document.getElementById('crypto-list-card');
+    const holdingsCard = document.getElementById('holdings-card');
+    const profileHistoryTabBtn = document.getElementById('profile-history-tab');
+
     let balanceVisible = true;
     let userBalanceRaw = 0;
     let selectedCryptoForTrade = null;
     let currentUserFullname = ''; // NEW: Store user info
     let currentUserEmail = ''; // NEW: Store user info
+    let userHoldings = {}; // NEW: Store user's crypto quantities { currencyId: quantity }
 
     // --- Chart Instances ---
     let portfolioChart = null;
@@ -199,6 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Rendering Functions ---
     function renderHoldings(holdings) {
         if (!holdingsTableBody) return;
+        userHoldings = {}; // Reset holdings before rendering
         holdingsTableBody.innerHTML = '';
         if (!holdings || holdings.length === 0) {
             holdingsTableBody.innerHTML = '<tr><td colspan=\"5\" class=\"text-center text-muted\">Vous ne détenez aucun actif.</td></tr>';
@@ -208,6 +221,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const changePercent = parseFloat(holding.currency_change_24h_percent);
             const changeValueFormatted = holding.currency_change_24h_value_cad_formatted;
             const changeClass = getChangeClass(changePercent);
+
+            // Store holding quantity for "Sell All" feature
+            userHoldings[holding.currency_id] = parseFloat(holding.quantity_raw);
+
             const row = `
                 <tr>
                     <td><img src=\"${holding.image_url || 'https://via.placeholder.com/20'}\" alt=\"${holding.symbol || ''}\" width=\"20\" height=\"20\" class=\"me-2 align-middle\"> <span class=\"align-middle\">${holding.name || 'N/A'} (${holding.symbol || 'N/A'})</span></td>
@@ -307,6 +324,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function addCryptoListRowListeners() {
          const rows = cryptoListTableBody.querySelectorAll('.crypto-list-row');
+         // Reset sell all button state initially
+         if (sellAllButton) sellAllButton.disabled = true;
+
          rows.forEach(row => {
              row.addEventListener('click', (event) => {
                  if (event.target.closest('.view-chart-btn')) return;
@@ -336,6 +356,12 @@ document.addEventListener('DOMContentLoaded', function() {
                      if (amountInput && quickBuyBtn) amountInput.focus();
                      if (quantityInput && quickSellBtn) quantityInput.focus();
 
+                     // Enable/Disable Sell All button based on holdings
+                     if (sellAllButton) {
+                         const ownedQuantity = userHoldings[selectedCryptoForTrade.id];
+                         sellAllButton.disabled = !(ownedQuantity && ownedQuantity > 0);
+                     }
+
                      return; // Don't proceed with normal row selection
                  }
 
@@ -348,6 +374,12 @@ document.addEventListener('DOMContentLoaded', function() {
                  if (amountInput) amountInput.value = ''; if (quantityInput) quantityInput.value = '';
                  if (buyButton) buyButton.disabled = false; if (sellButton) sellButton.disabled = false;
                  if (tradeInfoEl) tradeInfoEl.classList.add('d-none');
+
+                 // Enable/Disable Sell All button based on holdings
+                 if (sellAllButton) {
+                     const ownedQuantity = userHoldings[selectedCryptoForTrade.id];
+                     sellAllButton.disabled = !(ownedQuantity && ownedQuantity > 0);
+                 }
              });
          });
      }
@@ -405,9 +437,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if(accountStatusEl) { accountStatusEl.textContent = 'Chargement...'; accountStatusEl.className = 'badge account-status'; }
         if(accountLastLoginEl) accountLastLoginEl.textContent = 'Chargement...';
         if(balanceAmountEl) balanceAmountEl.textContent = 'Chargement...';
-        if (portfolioTotalValueEl) portfolioTotalValueEl.textContent = 'Chargement...';
-        if (portfolioCryptoValueEl) portfolioCryptoValueEl.textContent = '';
-        if (portfolioChange24hEl) portfolioChange24hEl.innerHTML = '<i class=\"fa-solid fa-spinner fa-spin\"></i>';
+        if(investmentAmountEl) investmentAmountEl.textContent = 'Chargement...';
         if (weeklyGainEl) weeklyGainEl.innerHTML = '<i class=\"fa-solid fa-spinner fa-spin me-1\"></i> Chargement...';
 
         try {
@@ -427,11 +457,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Update account details section
                 if (accountTypeEl) accountTypeEl.textContent = data.account.type;
-                if (accountStatusEl) { accountStatusEl.textContent = data.account.status; accountStatusEl.className = `badge account-status ${data.account.status === 'Active' ? 'bg-success' : 'bg-warning'}`; }
+                if (accountStatusEl) { accountStatusEl.textContent = data.account.status; accountStatusEl.className = `badge account-status ${data.account.status === 'Active' ? 'bg-success' : 'bg-warning text-dark'}`; }
                 if (accountLastLoginEl) accountLastLoginEl.textContent = data.account.last_login;
                 userBalanceRaw = data.account.balance_cad_raw;
                 if (balanceAmountEl) balanceAmountEl.textContent = data.account.balance_cad_formatted;
                 if (hiddenBalanceEl) hiddenBalanceEl.textContent = '******$ CAD';
+                if (investmentAmountEl) investmentAmountEl.textContent = data.portfolio.crypto_value_cad_formatted || '0.00$ CAD';
+                if (hiddenInvestmentEl) hiddenInvestmentEl.textContent = '******$ CAD';
 
                  // Store user fullname and email for profile form (NEW/CORRECTED)
                  currentUserFullname = data.account.fullname || '';
@@ -465,10 +497,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                  // Update portfolio section
                 const portfolioChangeClass = getChangeClass(parseFloat(data.portfolio?.change_24h_percent_formatted));
-                if (portfolioTotalValueEl) portfolioTotalValueEl.textContent = data.portfolio.total_value_cad_formatted;
-                if (portfolioCryptoValueEl) portfolioCryptoValueEl.textContent = `Crypto: ${data.portfolio.crypto_value_cad_formatted}`;
-                if (portfolioChange24hEl) { portfolioChange24hEl.innerHTML = `24h: <span class=\"${portfolioChangeClass}\">${data.portfolio.change_24h_percent_formatted} (${data.portfolio.change_24h_cad_formatted}$)</span>`; }
-                if (weeklyGainEl) weeklyGainEl.textContent = ''; // Clear loading state
+                if (weeklyGainEl) { weeklyGainEl.innerHTML = `Gain Crypto (24h): <span class="${portfolioChangeClass}">${data.portfolio.change_24h_cad_formatted} (${data.portfolio.change_24h_percent_formatted})</span>`; }
 
                  // Render holdings and chart
                 if (holdingsTableBody) renderHoldings(data.holdings);
@@ -512,6 +541,8 @@ document.addEventListener('DOMContentLoaded', function() {
             balanceVisible = !balanceVisible;
             balanceAmountEl.classList.toggle('d-none', !balanceVisible);
             hiddenBalanceEl.classList.toggle('d-none', balanceVisible);
+            if (investmentAmountEl) investmentAmountEl.classList.toggle('d-none', !balanceVisible);
+            if (hiddenInvestmentEl) hiddenInvestmentEl.classList.toggle('d-none', balanceVisible);
             const icon = toggleBalanceBtn.querySelector('i');
             icon.className = balanceVisible ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
         });
@@ -1128,6 +1159,86 @@ document.addEventListener('DOMContentLoaded', function() {
             // Navigate to the PDF download route
             // The backend will handle PDF generation or show an error if the library is missing.
             alert('La fonctionnalité de téléchargement PDF est en cours de développement.');
+        });
+    }
+
+    // --- NEW: Bounce Effect Helper ---
+    function applyBounceEffect(targetElement) {
+        if (!targetElement) return;
+
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Apply the bounce effect class
+        targetElement.classList.add('bounce-effect');
+
+        // Remove the class after the animation duration (e.g., 1000ms)
+        setTimeout(() => {
+            targetElement.classList.remove('bounce-effect');
+        }, 1000); // Must match CSS animation duration
+    }
+
+    // --- NEW: Navbar Link Event Listeners ---
+
+    // Cryptomonnaies Link Listener
+    if (navLinkCryptos && cryptoListCard) {
+        navLinkCryptos.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default anchor jump
+            applyBounceEffect(cryptoListCard);
+        });
+    }
+
+    // Mes Actifs Link Listener
+    if (navLinkHoldings && holdingsCard) {
+        navLinkHoldings.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default anchor jump
+            applyBounceEffect(holdingsCard);
+        });
+    }
+
+    // Transactions Link Listener
+    if (navLinkTransactions && profileSettingsModalEl && profileHistoryTabBtn) {
+        navLinkTransactions.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default link and modal toggle
+
+            // Ensure the modal instance is available (may need re-instantiation if not global)
+            const profileModalInstance = bootstrap.Modal.getInstance(profileSettingsModalEl) || new bootstrap.Modal(profileSettingsModalEl);
+            const historyTabInstance = bootstrap.Tab.getInstance(profileHistoryTabBtn) || new bootstrap.Tab(profileHistoryTabBtn);
+
+            if (profileModalInstance && historyTabInstance) {
+                historyTabInstance.show(); // Activate the history tab
+
+                // Since Bootstrap 5 might show the modal immediately due to data attributes,
+                // we ensure the tab is shown first, then explicitly show the modal if needed.
+                // However, activating the tab might be enough if the modal is already handling the toggle.
+                // Let's ensure the modal is shown after activating the tab.
+                // Use a small timeout to ensure tab activation completes visually before showing modal if needed.
+                // setTimeout(() => { profileModalInstance.show(); }, 50); // Adjust delay if necessary
+                // Update: Bootstrap handles the modal show via data-attributes. Activating the tab first should be sufficient.
+                // Re-showing it might cause issues if already shown.
+            } else {
+                console.error('Could not get modal or tab instance for Transactions link.');
+            }
+        });
+    }
+
+    // --- NEW: Sell All Button Listener ---
+    if (sellAllButton && quantityInput) {
+        sellAllButton.addEventListener('click', function() {
+            if (!selectedCryptoForTrade || !selectedCryptoForTrade.id) {
+                console.error('Sell All: No crypto selected.');
+                return;
+            }
+
+            const ownedQuantity = userHoldings[selectedCryptoForTrade.id];
+
+            if (ownedQuantity && ownedQuantity > 0) {
+                quantityInput.value = ownedQuantity.toFixed(8); // Set input to max owned quantity
+                updateTradeForm('quantity'); // Trigger form update
+            } else {
+                console.warn('Sell All: User does not own the selected crypto or quantity is zero.');
+                quantityInput.value = ''; // Clear quantity if they don't own it
+                updateTradeForm('quantity');
+            }
         });
     }
 

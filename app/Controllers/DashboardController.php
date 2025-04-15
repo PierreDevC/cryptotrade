@@ -70,6 +70,8 @@ class DashboardController {
             $holdingsFormatted[] = [
                 'name' => $holding['name'],
                 'symbol' => $holding['symbol'],
+                'currency_id' => (int)$holding['currency_id'],
+                'quantity_raw' => (float)$holding['quantity'],
                 'quantity' => number_format($holding['quantity'], 8, '.', ''), // Raw quantity might be useful too
                 'current_price_usd_formatted' => '$' . number_format($holding['current_price_usd'], 2, '.', ','),
                 'current_price_cad_formatted' => '$' . number_format($holding['current_price_usd'] * $usdToCadRate, 2, '.', ','),

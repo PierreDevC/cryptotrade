@@ -101,6 +101,16 @@
             padding: 0.2rem 0.4rem;
             font-size: 0.8rem;
         }
+
+        /* NEW: Bounce Effect Animation */
+        @keyframes bounce {
+          0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+          40% {transform: translateY(-20px);}
+          60% {transform: translateY(-10px);}
+        }
+        .bounce-effect {
+          animation: bounce 1s ease;
+        }
     </style>
 </head>
 <body>
@@ -116,9 +126,9 @@
                     <li class="nav-item">
                         <a class="nav-link active" aria-current="page" href="/cryptotrade/dashboard">Acceuil du Dashboard</a>
                     </li>
-                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="#">Cryptomonnaies</a></li>
-                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="#holdings-section">Portefeuille</a></li>
-                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="#">Alertes</a></li>
+                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="#crypto-list-card" id="nav-link-cryptos">Cryptomonnaies</a></li>
+                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="#holdings-card" id="nav-link-holdings">Mes actifs</a></li>
+                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="#" id="nav-link-transactions" data-bs-toggle="modal" data-bs-target="#profileSettingsModal">Transactions</a></li>
                 </ul>
                 <div class="d-flex gap-2"> <div class="nav-item dropdown">
                         <button class="btn btn-outline-secondary dropdown-toggle font-weight-bold" type="button" id="navbarDropdown" data-bs-toggle="dropdown" aria-expanded="false">Compte <i class="fa-solid fa-user"></i></button>
@@ -150,15 +160,18 @@
                         <div class="row align-items-center"><div class="col-md-6">
                                 <p class="mb-1"><strong>Type de Compte:</strong> <span class="account-type">Chargement...</span></p>
                                 <p class="mb-1"><strong>Statut:</strong> <span class="badge account-status">Chargement...</span></p>
-                                <p class="mb-1 account-last-login"><strong>Dernière connexion:</strong> Chargement...</p>
+                                <p class="mb-1 account-last-login"><strong>Dernière connexion:</strong> <span id="lastLoginValue">Chargement...</span></p>
                         </div><div class="col-md-6 text-md-end">
                                 <p class="text-muted mb-1 d-flex align-items-center justify-content-md-end">Solde Actuel (CAD)<button id="toggleBalance" class="btn btn-sm ms-2 p-0 border-0 shadow-none"><i class="fa-solid fa-eye"></i></button></p>
                                 <h2 id="balanceAmount" class="display-5 fw-bold text-dark mb-0" style="font-family: sans-serif;">Chargement...</h2>
                                 <h2 id="hiddenBalance" class="display-5 fw-bold text-dark mb-0 d-none" style="font-family: sans-serif;">******$ CAD</h2>
+                                <p class="text-muted mb-1 mt-2 d-flex align-items-center justify-content-md-end">Investissements Actifs (CAD)</p>
+                                <h4 id="investmentAmount" class="fw-bold text-dark mb-0" style="font-family: sans-serif;">Chargement...</h4>
+                                <h4 id="hiddenInvestment" class="fw-bold text-dark mb-0 d-none" style="font-family: sans-serif;">******$ CAD</h4>
                                 <p class="text-success mt-2 weekly-gain"><i class="fa-solid fa-spinner fa-spin me-1"></i> Chargement...</p>
                         </div></div>
                 </div></div>
-                <div class="row g-4" id="holdings-section"> <div class="col-12 grid-item">
+                <div class="row g-4" id="holdings-section"> <div class="col-12 grid-item" id="holdings-card">
                         <h5>Mes Actifs</h5>
                         <div class="table-responsive"><table class="table crypto-table"><thead><tr>
                                         <th scope="col">Crypto</th><th scope="col">Quantité</th><th scope="col">Prix Actuel (CAD)</th>
@@ -179,9 +192,10 @@
                         </div></div><div class="d-flex justify-content-between mt-3">
                                 <button id="buyButton" class="btn btn-success" disabled><i class="fa-solid fa-arrow-right-to-bracket me-2"></i>Acheter</button>
                                 <button id="sellButton" class="btn btn-danger" disabled><i class="fa-solid fa-arrow-right-from-bracket me-2"></i>Vendre</button>
+                                <button id="sellAllButton" class="btn btn-outline-danger ms-2" disabled title="Vendre la quantité maximale détenue"><i class="fa-solid fa-sack-dollar me-1"></i> Vendre Tout</button>
                         </div><div class="alert alert-info mt-3 d-none" id="tradeInfo"><i class="fa-solid fa-info-circle me-2"></i><span id="tradeInfoText"></span></div></div>
                     </div>
-                    <div class="col-12 grid-item" style="overflow-y: auto;">
+                    <div class="col-12 grid-item" style="overflow-y: auto;" id="crypto-list-card">
                         <h5>Cryptomonnaies</h5>
                          <div class="table-responsive"><table class="table crypto-table"><thead><tr>
                                         <th scope="col" style="width: 50px;"></th><th scope="col">#</th><th scope="col">Crypto</th><th scope="col">Price (USD)</th>
