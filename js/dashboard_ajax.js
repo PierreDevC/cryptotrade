@@ -31,6 +31,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const tradeInfoEl = document.getElementById('tradeInfo');
     const tradeInfoTextEl = document.getElementById('tradeInfoText');
 
+    // --- Admin Currency Management Selectors (NEW) ---
+    const adminCurrencySection = document.getElementById('adminCurrencyManagementSection');
+    const adminCurrencySelect = document.getElementById('adminSelectCurrency');
+    const adminCurrencyForm = document.getElementById('adminCurrencyForm');
+    const adminCurrencyIdInput = document.getElementById('adminCurrencyId');
+    const adminCurrencyNameInput = document.getElementById('adminCurrencyName');
+    const adminCurrencySymbolInput = document.getElementById('adminCurrencySymbol');
+    const adminCurrencyPriceInput = document.getElementById('adminCurrencyPrice');
+    const adminCurrencyChangeInput = document.getElementById('adminCurrencyChange');
+    const adminCurrencyMarketCapInput = document.getElementById('adminCurrencyMarketCap');
+    const adminCurrencyVolatilityInput = document.getElementById('adminCurrencyVolatility');
+    const adminCurrencyTrendInput = document.getElementById('adminCurrencyTrend');
+    const adminAddBtn = document.getElementById('adminAddCurrencyBtn');
+    const adminUpdateBtn = document.getElementById('adminUpdateCurrencyBtn');
+    const adminDeleteBtn = document.getElementById('adminDeleteCurrencyBtn');
+    const adminMessageArea = document.getElementById('adminCurrencyMessage');
+
     // Confirmation Modal Selectors
     const confirmationModalEl = document.getElementById('confirmationModal');
     const confirmationModal = confirmationModalEl ? new bootstrap.Modal(confirmationModalEl) : null;
@@ -398,6 +415,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (weeklyGainEl) weeklyGainEl.textContent = '';
                 if (holdingsTableBody) renderHoldings(data.holdings);
                 if (data.portfolioChart) renderPortfolioChart(data.portfolioChart);
+
+                // NEW: Show admin section and load dropdown if user is admin
+                if (adminCurrencySection && data.account.is_admin === true) {
+                    adminCurrencySection.classList.remove('d-none');
+                    loadAdminCurrenciesDropdown(); // Load currencies into the admin dropdown
+                } else if (adminCurrencySection) {
+                    adminCurrencySection.classList.add('d-none'); // Ensure it's hidden for non-admins
+                }
+
             } else {
                 console.error('Dashboard API data processing failed:', resultDash.message || 'Unknown error');
                 if (accountTypeEl) accountTypeEl.textContent = 'Erreur';
@@ -566,6 +592,262 @@ document.addEventListener('DOMContentLoaded', function() {
         quantityInput.addEventListener('input', () => updateTradeForm('quantity'));
     }
 
+    // --- NEW: Admin Functions ---
+
+    // Helper to display messages in the admin modal section
+    function displayAdminCurrencyMessage(message, isError = false) {
+        if (!adminMessageArea) return;
+        adminMessageArea.textContent = message;
+        adminMessageArea.className = `alert alert-${isError ? 'danger' : 'success'}`;
+        adminMessageArea.classList.remove('d-none');
+         // Optionally hide after a few seconds
+         setTimeout(() => {
+            if (adminMessageArea) {
+                 adminMessageArea.classList.add('d-none');
+                 adminMessageArea.textContent = '';
+                 adminMessageArea.className = 'mb-3'; // Reset class
+             }
+         }, 5000); // Hide after 5 seconds
+    }
+
+    // Reset the admin currency form to its default state (for adding new)
+    function clearAdminCurrencyForm() {
+        if (!adminCurrencyForm) return;
+        adminCurrencyForm.reset(); // Resets form fields
+        if (adminCurrencyIdInput) adminCurrencyIdInput.value = ''; // Clear hidden ID
+        if (adminUpdateBtn) adminUpdateBtn.disabled = true;
+        if (adminDeleteBtn) adminDeleteBtn.disabled = true;
+        if (adminAddBtn) adminAddBtn.disabled = false;
+        if (adminMessageArea) adminMessageArea.classList.add('d-none'); // Hide messages
+    }
+
+    // Fetch the list of currencies and populate the admin dropdown
+    async function loadAdminCurrenciesDropdown() {
+        if (!adminCurrencySelect) return;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/currencies`); // Use new admin endpoint
+            if (!response.ok) throw new Error(`API Error: ${response.status}`);
+            const result = await response.json();
+
+            if (result.success && Array.isArray(result.data)) {
+                // Clear existing options (keep the first "Add New" option)
+                adminCurrencySelect.innerHTML = '<option value="new" selected>-- Ajouter Nouvelle Crypto --</option>';
+                result.data.forEach(currency => {
+                    const option = document.createElement('option');
+                    option.value = currency.id;
+                    option.textContent = `${currency.name} (${currency.symbol})`;
+                    adminCurrencySelect.appendChild(option);
+                });
+            } else {
+                throw new Error(result.message || 'Failed to load currencies');
+            }
+        } catch (error) {
+            console.error('Error loading admin currencies:', error);
+             displayAdminCurrencyMessage(`Erreur chargement devises: ${error.message}`, true);
+        }
+    }
+
+    // Fetch details for a specific currency and populate the admin form
+    async function loadCurrencyDetailsForAdminForm(currencyId) {
+        if (!currencyId || currencyId === 'new' || !adminCurrencyForm) return;
+        clearAdminCurrencyForm(); // Start with a clean slate
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/currency/${currencyId}`);
+            if (!response.ok) {
+                if (response.status === 404) throw new Error('Devise non trouvée.');
+                throw new Error(`API Error: ${response.status}`);
+            }
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                const details = result.data;
+                if (adminCurrencyIdInput) adminCurrencyIdInput.value = details.id;
+                if (adminCurrencyNameInput) adminCurrencyNameInput.value = details.name || '';
+                if (adminCurrencySymbolInput) adminCurrencySymbolInput.value = details.symbol || '';
+                if (adminCurrencyPriceInput) adminCurrencyPriceInput.value = details.current_price_usd || '';
+                if (adminCurrencyChangeInput) adminCurrencyChangeInput.value = details.change_24h_percent || '';
+                if (adminCurrencyMarketCapInput) adminCurrencyMarketCapInput.value = details.market_cap_usd || '';
+                if (adminCurrencyVolatilityInput) adminCurrencyVolatilityInput.value = details.base_volatility || '';
+                if (adminCurrencyTrendInput) adminCurrencyTrendInput.value = details.base_trend || '';
+
+                // Enable Update/Delete, disable Add
+                if (adminUpdateBtn) adminUpdateBtn.disabled = false;
+                if (adminDeleteBtn) adminDeleteBtn.disabled = false;
+                if (adminAddBtn) adminAddBtn.disabled = true;
+            } else {
+                throw new Error(result.message || 'Failed to load currency details');
+            }
+        } catch (error) {
+            console.error(`Error loading currency details for ${currencyId}:`, error);
+            displayAdminCurrencyMessage(`Erreur chargement détails: ${error.message}`, true);
+             clearAdminCurrencyForm(); // Reset form on error
+        }
+    }
+
+     // --- End NEW Admin Functions ---
+
+
+    // --- Event Listeners ---
+    if (adminCurrencySelect) {
+        adminCurrencySelect.addEventListener('change', function() {
+            const selectedId = this.value;
+            if (selectedId === 'new') {
+                clearAdminCurrencyForm();
+            } else {
+                loadCurrencyDetailsForAdminForm(selectedId);
+            }
+        });
+    }
+
+    // Listener for the ADD button
+    if (adminAddBtn) {
+        adminAddBtn.addEventListener('click', async function() {
+             if (!adminCurrencyForm) return;
+             if (!adminCurrencyForm.checkValidity()) {
+                 displayAdminCurrencyMessage('Veuillez remplir tous les champs requis.', true);
+                 adminCurrencyForm.reportValidity(); // Trigger browser validation feedback
+                 return;
+             }
+
+             const currencyData = {
+                 name: adminCurrencyNameInput.value,
+                 symbol: adminCurrencySymbolInput.value,
+                 current_price_usd: adminCurrencyPriceInput.value,
+                 change_24h_percent: adminCurrencyChangeInput.value,
+                 market_cap_usd: adminCurrencyMarketCapInput.value,
+                 base_volatility: adminCurrencyVolatilityInput.value,
+                 base_trend: adminCurrencyTrendInput.value
+             };
+
+             this.disabled = true; // Prevent double clicks
+             this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Ajout...';
+
+             try {
+                 const response = await fetch(`${API_BASE_URL}/admin/currency/add`, {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                     body: JSON.stringify(currencyData)
+                 });
+                 const result = await response.json();
+
+                 if (!response.ok || !result.success) {
+                     throw new Error(result.message || `Erreur ${response.status}`);
+                 }
+
+                 displayAdminCurrencyMessage(result.message || 'Devise ajoutée avec succès!');
+                 clearAdminCurrencyForm();
+                 await loadAdminCurrenciesDropdown(); // Refresh dropdown
+                 await fetchDashboardData(); // Refresh main crypto list
+
+             } catch (error) {
+                 console.error('Error adding currency:', error);
+                 displayAdminCurrencyMessage(`Erreur ajout: ${error.message}`, true);
+             } finally {
+                 this.disabled = false;
+                 this.innerHTML = '<i class="fas fa-plus me-1"></i> Ajouter';
+             }
+        });
+    }
+
+    // Listener for the UPDATE button
+    if (adminUpdateBtn) {
+        adminUpdateBtn.addEventListener('click', async function() {
+            if (!adminCurrencyForm) return;
+            const currencyId = adminCurrencyIdInput.value;
+            if (!currencyId) {
+                displayAdminCurrencyMessage('Aucune devise sélectionnée pour la mise à jour.', true);
+                return;
+            }
+            if (!adminCurrencyForm.checkValidity()) {
+                 displayAdminCurrencyMessage('Veuillez remplir tous les champs requis.', true);
+                 adminCurrencyForm.reportValidity();
+                 return;
+             }
+
+             const currencyData = {
+                 name: adminCurrencyNameInput.value,
+                 symbol: adminCurrencySymbolInput.value,
+                 current_price_usd: adminCurrencyPriceInput.value,
+                 change_24h_percent: adminCurrencyChangeInput.value,
+                 market_cap_usd: adminCurrencyMarketCapInput.value,
+                 base_volatility: adminCurrencyVolatilityInput.value,
+                 base_trend: adminCurrencyTrendInput.value
+             };
+
+             this.disabled = true;
+             this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Mise à jour...';
+
+            try {
+                 const response = await fetch(`${API_BASE_URL}/admin/currency/update/${currencyId}`, {
+                     method: 'POST', // Or PUT if router handles it
+                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                     body: JSON.stringify(currencyData)
+                 });
+                 const result = await response.json();
+
+                 if (!response.ok || !result.success) {
+                     throw new Error(result.message || `Erreur ${response.status}`);
+                 }
+
+                 displayAdminCurrencyMessage(result.message || 'Devise mise à jour avec succès!');
+                 await loadAdminCurrenciesDropdown(); // Refresh dropdown (name/symbol might change)
+                 await fetchDashboardData(); // Refresh main crypto list
+
+             } catch (error) {
+                 console.error('Error updating currency:', error);
+                 displayAdminCurrencyMessage(`Erreur MàJ: ${error.message}`, true);
+             } finally {
+                 this.disabled = false;
+                 this.innerHTML = '<i class="fas fa-save me-1"></i> Mettre à jour';
+             }
+        });
+    }
+
+    // Listener for the DELETE button
+    if (adminDeleteBtn) {
+        adminDeleteBtn.addEventListener('click', async function() {
+            const currencyId = adminCurrencyIdInput.value;
+            const currencyName = adminCurrencyNameInput.value || 'cette devise';
+            if (!currencyId) {
+                displayAdminCurrencyMessage('Aucune devise sélectionnée pour la suppression.', true);
+                return;
+            }
+
+            if (confirm(`Êtes-vous sûr de vouloir supprimer ${currencyName} (ID: ${currencyId}) ? Cette action est irréversible et peut échouer si des portefeuilles la contiennent.`)) {
+
+                this.disabled = true;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Suppression...';
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/admin/currency/delete/${currencyId}`, {
+                        method: 'DELETE' // Assuming router handles DELETE
+                    });
+                    const result = await response.json(); // Might not return JSON on success, check status
+
+                    if (!response.ok) { // Check status code for delete success (200, 204) or failure
+                         throw new Error(result.message || `Erreur ${response.status}`);
+                     }
+
+                    displayAdminCurrencyMessage(result.message || 'Devise supprimée avec succès!');
+                    clearAdminCurrencyForm();
+                    await loadAdminCurrenciesDropdown(); // Refresh dropdown
+                    await fetchDashboardData(); // Refresh main crypto list
+
+                } catch (error) {
+                    console.error('Error deleting currency:', error);
+                    displayAdminCurrencyMessage(`Erreur suppression: ${error.message}`, true);
+                } finally {
+                    this.disabled = false;
+                    this.innerHTML = '<i class="fas fa-trash me-1"></i> Supprimer';
+                }
+            }
+        });
+    }
+
+    // --- End NEW Admin Event Listeners ---
+
     // --- Initial Load ---
-    fetchDashboardData();
+    fetchDashboardData(); // This now potentially shows the admin section and loads its dropdown
 });

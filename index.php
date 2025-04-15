@@ -76,6 +76,16 @@ $router->get('/api/crypto/chart/{id}', 'App\Controllers\MarketController@getCryp
 $router->post('/api/transaction/buy', 'App\Controllers\TransactionController@buy');
 $router->post('/api/transaction/sell', 'App\Controllers\TransactionController@sell');
 
+// --- Admin Route Example (Protected) ---
+$router->get('/admin', 'App\Controllers\AdminController@index');
+
+// --- API Routes for Admin Currency Management (Protected) ---
+$router->get('/api/admin/currencies', 'App\Controllers\AdminController@getCurrenciesForAdmin');
+$router->get('/api/admin/currency/{id}', 'App\Controllers\AdminController@getCurrencyDetails');
+$router->post('/api/admin/currency/add', 'App\Controllers\AdminController@addCurrency');
+$router->post('/api/admin/currency/update/{id}', 'App\Controllers\AdminController@updateCurrency');
+$router->delete('/api/admin/currency/delete/{id}', 'App\Controllers\AdminController@deleteCurrency'); // Using POST for delete in HTML forms is common, but DELETE is semantically correct for APIs
+
 // --- Dispatch ---
 try {
     $router->dispatch();

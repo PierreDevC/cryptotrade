@@ -126,6 +126,7 @@ class DashboardController {
                  'balance_cad_raw' => $user['balance_cad'],
                  'balance_cad_formatted' => number_format($user['balance_cad'], 2, '.', ',') . '$ CAD',
                  // 'weekly_gain_percent' => 3.2 // Placeholder - consider removing if not implemented
+                 'is_admin' => (bool)$user['is_admin'] // NEW: Expose admin status
              ],
              'portfolio' => [
                  'total_value_cad_raw' => $totalAccountValueCAD,

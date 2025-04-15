@@ -5,7 +5,8 @@ namespace App\Core;
 class Router {
     protected $routes = [
         'GET' => [],
-        'POST' => []
+        'POST' => [],
+        'DELETE' => []
     ];
     protected $request;
 
@@ -21,6 +22,10 @@ class Router {
         $this->routes['POST'][$this->normalizeUri($uri)] = $controllerAction;
     }
 
+    public function delete($uri, $controllerAction) {
+        $this->routes['DELETE'][$this->normalizeUri($uri)] = $controllerAction;
+    }
+
     private function normalizeUri($uri) {
         return trim($uri, '/');
     }
@@ -28,6 +33,11 @@ class Router {
     public function dispatch() {
         $uri = $this->request->getUri();
         $method = $this->request->getMethod();
+
+        if (!isset($this->routes[$method])) {
+            $this->handleNotFound();
+            return;
+        }
 
         $matchedRoute = null;
         $params = [];

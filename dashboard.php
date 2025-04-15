@@ -258,6 +258,68 @@
           <div class="modal-body">
             <!-- Contenu de la modale (Profil et Paramètres) sera ajouté ici -->
             <p>Contenu du profil et des paramètres...</p>
+
+            <!-- NEW: Admin Currency Management Section (Initially hidden) -->
+            <div id="adminCurrencyManagementSection" class="mt-4 pt-4 border-top d-none">
+                <h5 class="mb-3"><i class="fas fa-coins me-2"></i>Gestion des Cryptomonnaies (Admin)</h5>
+                <div id="adminCurrencyMessage" class="mb-3"></div> <!-- For success/error messages -->
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="adminSelectCurrency" class="form-label">Sélectionner / Ajouter</label>
+                        <select class="form-select" id="adminSelectCurrency">
+                            <option value="new" selected>-- Ajouter Nouvelle Crypto --</option>
+                            <!-- Options will be populated by JS -->
+                        </select>
+                    </div>
+                </div>
+
+                <form id="adminCurrencyForm" class="mt-3">
+                    <input type="hidden" id="adminCurrencyId">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="adminCurrencyName" class="form-label">Nom</label>
+                            <input type="text" class="form-control" id="adminCurrencyName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="adminCurrencySymbol" class="form-label">Symbole (ex: BTC)</label>
+                            <input type="text" class="form-control" id="adminCurrencySymbol" required maxlength="10">
+                        </div>
+                    </div>
+                     <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="adminCurrencyPrice" class="form-label">Prix Actuel (USD)</label>
+                            <input type="number" step="any" class="form-control" id="adminCurrencyPrice" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="adminCurrencyChange" class="form-label">Variation 24h (%)</label>
+                            <input type="number" step="any" class="form-control" id="adminCurrencyChange" required>
+                        </div>
+                    </div>
+                     <div class="row g-3 mb-3">
+                         <div class="col-md-6">
+                            <label for="adminCurrencyMarketCap" class="form-label">Market Cap (USD)</label>
+                            <input type="number" step="any" class="form-control" id="adminCurrencyMarketCap" required>
+                        </div>
+                         <div class="col-md-6">
+                             <label for="adminCurrencyVolatility" class="form-label">Volatilité Base (ex: 0.015)</label>
+                            <input type="number" step="0.0001" class="form-control" id="adminCurrencyVolatility" required>
+                        </div>
+                    </div>
+                     <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="adminCurrencyTrend" class="form-label">Tendance Base (ex: 0.001)</label>
+                            <input type="number" step="0.0001" class="form-control" id="adminCurrencyTrend" required>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <button type="button" class="btn btn-success" id="adminAddCurrencyBtn"><i class="fas fa-plus me-1"></i> Ajouter</button>
+                        <button type="button" class="btn btn-primary" id="adminUpdateCurrencyBtn" disabled><i class="fas fa-save me-1"></i> Mettre à jour</button>
+                        <button type="button" class="btn btn-danger" id="adminDeleteCurrencyBtn" disabled><i class="fas fa-trash me-1"></i> Supprimer</button>
+                    </div>
+                </form>
+            </div>
+            <!-- End Admin Section -->
+
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
