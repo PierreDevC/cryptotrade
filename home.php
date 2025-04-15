@@ -19,7 +19,6 @@
 	<!-- Navbar --->
 <nav class="sticky-top navbar navbar-expand-lg py-4 border-bottom" style="background-color: rgba(255, 255, 255, 0.8);">
 <div class="container">
-    {/* Link to root route */}
     <a class="navbar-brand brand-logo" href="/cryptotrade/">CryptoTrade</a>
 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
@@ -32,7 +31,6 @@
 		<li class="nav-item"><a class="nav-link active" aria-current="page" href="#">À propos</a></li>
       </ul>
 <div class="d-flex gap-2">
-    {/* Links to routes */}
     <a href="/cryptotrade/signup" class="button-57 text-decoration-none" role="button"><span class="text">Commencer gratuitement</span><span>Créer un compte</span></a>
     <a href="/cryptotrade/login" class="action-button text-decoration-none">Se connecter</a>
 </div>
@@ -47,7 +45,6 @@
             <h1 class="display-4 mb-4">La meilleure plateforme pour investir dans les meilleures cryptos</h1>
             <p class="bg-white bg-opacity-75 shadow p-3 rounded">Découvrez CryptoTrade, votre plateforme intuitive et sécurisée...</p>
             <div class="d-flex justify-content-center gap-3">
-                {/* Links to routes */}
                 <a href="/cryptotrade/signup" class="button-57 text-decoration-none" role="button"><span class="text">Commencer gratuitement</span><span>Créer un compte</span></a>
                 <a href="/cryptotrade/login" class="action-button text-decoration-none">Se connecter</a>
             </div>
@@ -76,7 +73,6 @@
             <div class="col text-start">
               <h1 class="text text-start">Plateforme performante et sécurisée</h1>
               <p class="text-start">Notre plateforme CryptoTrade se distingue par son infrastructure robuste...</p>
-              {/* Link to route */}
               <a href="/cryptotrade/signup" class="button-57 text-decoration-none" role="button"><span class="text">Découvrir la plateforme</span><span>Créer un compte</span></a>
             </div>
   		</div></div>
@@ -104,7 +100,6 @@
             <div class="col text-end">
                 <h1 class="text text-end">L'innovation au service de votre réussite</h1>
                 <p class="text-end">Découvrez une plateforme en constante évolution...</p>
-                {/* Link to route */}
                 <a href="/cryptotrade/signup" class="button-57 text-decoration-none" role="button"><span class="text">Découvrir la plateforme</span><span>Créer un compte</span></a>
             </div>
             <div class="col"><img class="custom-img" src="/cryptotrade/img/eth.jpg" width="500px" alt=""/></div>
@@ -116,7 +111,6 @@
 	    <div class="container">
 		<h1 class="text text-center">Aperçu du marché de cryptomonnaies</h1>
 		<p class="text-center">Suivez en temps réel l'évolution des principales cryptomonnaies...</p>
-        {/* Static example table */}
         <table class="table table-hover table-striped table-bordered crypto-table" style="border-radius: 8px; overflow: hidden;"><thead class="table-dark"><tr><th>#</th><th>Name</th><th>Symbol</th><th>Price (USD)</th><th>24h Change</th><th>Market Cap</th><th>Volume (24h)</th></tr></thead><tbody>
             <tr><td>1</td><td><img src="https://assets.coingecko.com/coins/images/1/thumb/bitcoin.png" width="20" class="me-2">Bitcoin</td><td>BTC</td><td>$67,432.89</td><td class="text-success">+2.45%</td><td>$1.32T</td><td>$28.4B</td></tr>
             <tr><td>2</td><td><img src="https://assets.coingecko.com/coins/images/279/thumb/ethereum.png" width="20" class="me-2">Ethereum</td><td>ETH</td><td>$3,284.56</td><td class="text-success">+1.82%</td><td>$394.5B</td><td>$12.1B</td></tr>

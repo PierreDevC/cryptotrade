@@ -28,17 +28,17 @@ class MarketController {
         $rank = 1;
         foreach ($currencies as $currency) {
              $formattedList[] = [
-                 'id' => $currency['id'],
+                 'id' => (int)$currency['id'],
                  'rank' => $rank++,
                  'name' => $currency['name'],
                  'symbol' => $currency['symbol'],
-                 'price_usd' => number_format($currency['current_price_usd'], 2, '.', ','),
-                 'price_usd_raw' => $currency['current_price_usd'],
-                 'change_24h' => number_format($currency['change_24h_percent'], 2) . '%',
-                 'change_24h_raw' => $currency['change_24h_percent'],
-                 'market_cap' => $this->formatMarketCap($currency['market_cap_usd']), // Use helper
-                 'market_cap_raw' => $currency['market_cap_usd'],
-                 'image_url' => $this->getCryptoImageUrl($currency['symbol']) // Use same helper as DashboardController
+                 'price_usd' => number_format((float)$currency['current_price_usd'], 2, '.', ','),
+                 'price_usd_raw' => (float)$currency['current_price_usd'],
+                 'change_24h' => number_format((float)$currency['change_24h_percent'], 2) . '%',
+                 'change_24h_raw' => (float)$currency['change_24h_percent'],
+                 'market_cap' => $this->formatMarketCap((float)$currency['market_cap_usd']),
+                 'market_cap_raw' => (float)$currency['market_cap_usd'],
+                 'image_url' => $this->getCryptoImageUrl($currency['symbol'])
              ];
         }
 
@@ -117,6 +117,7 @@ class MarketController {
              'ETH' => 'https://assets.coingecko.com/coins/images/279/thumb/ethereum.png',
              'SOL' => 'https://assets.coingecko.com/coins/images/4128/thumb/solana.png',
              'SIM' => 'https://via.placeholder.com/20/09f/fff.png?text=S',
+             'SYM' => 'https://via.placeholder.com/20/777/fff.png?text=SYM',
              'USDT' => 'https://assets.coingecko.com/coins/images/325/thumb/Tether.png',
              'BNB' => 'https://assets.coingecko.com/coins/images/825/thumb/bnb-icon2_2x.png',
              'XRP' => 'https://assets.coingecko.com/coins/images/44/thumb/xrp-symbol-white-128.png',

@@ -23,7 +23,6 @@ require_once __DIR__ . '/app/Core/Session.php';
         <div class="row h-100">
             <!-- Left column -->
             <div class="col-md-6 col-lg-6 d-none d-md-block p-0 position-relative h-100 overflow-hidden">
-                {/* Link to root route */}
                 <a href="/cryptotrade/" class="text-decoration-none">
                     <h1 class="position-absolute text-white p-4 brand-logo" style="z-index: 1;">CryptoTrade</h1>
                 </a>
@@ -37,7 +36,6 @@ require_once __DIR__ . '/app/Core/Session.php';
                     </div>
                     <h2 class="text-center mb-4">Se connecter</h2>
 
-                    {/* ADDED: PHP Snippet for Flash Messages */}
                     <?php
                         $error = App\Core\Session::flash('error');
                         $success = App\Core\Session::flash('success');
@@ -53,9 +51,7 @@ require_once __DIR__ . '/app/Core/Session.php';
                                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                              </div>
                          <?php endif; ?>
-                    {/* End Flash Messages */}
 
-                    {/* Form points to route */}
                     <form method="POST" action="/cryptotrade/login">
                         <div class="mb-3">
                             <label for="email" class="form-label">Adresse courriel</label>
@@ -70,7 +66,6 @@ require_once __DIR__ . '/app/Core/Session.php';
                         </div>
                         <p class="text-center mt-3">
                             Vous n'avez pas encore de compte?
-                            {/* Link to route */}
                             <a href="/cryptotrade/signup" class="text-decoration-none">Créer un compte</a>
                         </p>
                     </form>
