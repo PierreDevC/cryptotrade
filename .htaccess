@@ -1,0 +1,18 @@
+# /cryptotrade/.htaccess
+
+RewriteEngine On
+
+# Redirect Trailing Slashes If Not A Folder...
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} (.+)/$
+RewriteRule ^ %1 [L,R=301]
+
+# Handle Front Controller...
+# Do not rewrite if the request is for an existing file or directory
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+# Rewrite all other requests to index.php
+RewriteRule ^ index.php [L]
+
+# Optional: Prevent directory listing
+Options -Indexes
