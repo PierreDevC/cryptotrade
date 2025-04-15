@@ -60,9 +60,27 @@ document.addEventListener('DOMContentLoaded', function() {
     const confirmErrorEl = document.getElementById('confirmationError');
     const confirmTransactionBtn = document.getElementById('confirmTransactionBtn');
 
+    // --- User Profile Settings Selectors (NEW) ---
+    const profileSettingsModalEl = document.getElementById('profileSettingsModal');
+    const userProfileForm = document.getElementById('userProfileForm');
+    const profileFullnameInput = document.getElementById('profileFullname');
+    const profileEmailInput = document.getElementById('profileEmail');
+    const profileCurrentPasswordInput = document.getElementById('profileCurrentPassword');
+    const profileNewPasswordInput = document.getElementById('profileNewPassword');
+    const profileConfirmPasswordInput = document.getElementById('profileConfirmPassword');
+    const saveProfileButton = document.getElementById('saveProfileButton');
+    const userProfileMessageArea = document.getElementById('userProfileMessage');
+
+    // --- Transaction History Selectors (NEW) ---
+    const transactionHistoryTableBody = document.getElementById('transactionHistoryTableBody');
+    const downloadCsvBtn = document.getElementById('downloadCsvBtn');
+    const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+
     let balanceVisible = true;
     let userBalanceRaw = 0;
     let selectedCryptoForTrade = null;
+    let currentUserFullname = ''; // NEW: Store user info
+    let currentUserEmail = ''; // NEW: Store user info
 
     // --- Chart Instances ---
     let portfolioChart = null;
@@ -127,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const originalButtonText = confirmTransactionBtn.innerHTML;
         confirmTransactionBtn.disabled = true;
-        confirmTransactionBtn.innerHTML = `<i class="fas fa-spinner fa-spin me-2"></i> Exécution...`;
+        confirmTransactionBtn.innerHTML = `<i class=\"fas fa-spinner fa-spin me-2\"></i> Exécution...`;
         confirmErrorEl.classList.add('d-none');
         confirmErrorEl.textContent = '';
 
@@ -183,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!holdingsTableBody) return;
         holdingsTableBody.innerHTML = '';
         if (!holdings || holdings.length === 0) {
-            holdingsTableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Vous ne détenez aucun actif.</td></tr>';
+            holdingsTableBody.innerHTML = '<tr><td colspan=\"5\" class=\"text-center text-muted\">Vous ne détenez aucun actif.</td></tr>';
             return;
         }
         holdings.forEach(holding => {
@@ -192,11 +210,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const changeClass = getChangeClass(changePercent);
             const row = `
                 <tr>
-                    <td><img src="${holding.image_url || 'https://via.placeholder.com/20'}" alt="${holding.symbol || ''}" width="20" height="20" class="me-2 align-middle"> <span class="align-middle">${holding.name || 'N/A'} (${holding.symbol || 'N/A'})</span></td>
+                    <td><img src=\"${holding.image_url || 'https://via.placeholder.com/20'}\" alt=\"${holding.symbol || ''}\" width=\"20\" height=\"20\" class=\"me-2 align-middle\"> <span class=\"align-middle\">${holding.name || 'N/A'} (${holding.symbol || 'N/A'})</span></td>
                     <td>${holding.quantity || '0'}</td>
                     <td>${holding.current_price_cad_formatted || 'N/A'}</td>
                     <td>${holding.total_value_cad_formatted || 'N/A'}</td>
-                    <td class="${changeClass}">${!isNaN(changePercent) ? changePercent.toFixed(2) + '%' : 'N/A'} <small class="d-block">(${changeValueFormatted || 'N/A'})</small></td>
+                    <td class=\"${changeClass}\">${!isNaN(changePercent) ? changePercent.toFixed(2) + '%' : 'N/A'} <small class=\"d-block\">(${changeValueFormatted || 'N/A'})</small></td>
                 </tr>`;
             holdingsTableBody.insertAdjacentHTML('beforeend', row);
         });
@@ -216,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
          if (!cryptoListTableBody) return;
          cryptoListTableBody.innerHTML = '';
          if (!cryptos || cryptos.length === 0) {
-             cryptoListTableBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Aucune cryptomonnaie disponible.</td></tr>';
+             cryptoListTableBody.innerHTML = '<tr><td colspan=\"8\" class=\"text-center text-muted\">Aucune cryptomonnaie disponible.</td></tr>';
              return;
          }
          Object.values(cryptoListChartInstances).forEach(chart => chart.destroy());
@@ -229,37 +247,37 @@ document.addEventListener('DOMContentLoaded', function() {
              const changeClass = getChangeClass(crypto.change_24h_raw);
              const chartId = `miniChart-${crypto.symbol}`;
              const row = `
-                 <tr style="cursor: pointer;" class="crypto-list-row" data-crypto-id="${crypto.id}" data-crypto-name="${crypto.name}" data-crypto-price-usd="${crypto.price_usd_raw}" data-crypto-symbol="${crypto.symbol}">
-                     <td class="align-middle"><img src="${crypto.image_url || 'https://via.placeholder.com/20'}" alt="${crypto.symbol || ''}" width="20" height="20"></td>
-                     <td class="align-middle">${crypto.rank || '#'}</td>
-                     <td class="align-middle">${crypto.name || 'N/A'} <small class="text-muted">(${crypto.symbol || 'N/A'})</small></td>
-                     <td class="align-middle">${formatUsd(crypto.price_usd_raw)}</td>
-                     <td class="align-middle ${changeClass}">${crypto.change_24h || 'N/A'}</td>
-                     <td class="align-middle">${crypto.market_cap || 'N/A'}</td>
-                     <td class="align-middle" style="width: 100px; height: 40px;"><canvas id="${chartId}" style="max-height: 40px;"></canvas></td>
-                     <td class="align-middle text-center">
-                         <button class="btn btn-sm btn-outline-secondary view-chart-btn"
-                                 data-bs-toggle="modal"
-                                 data-bs-target="#cryptoChartModal"  /* <<< Vérifiez cet attribut */
-                                 data-crypto-id="${crypto.id}"
-                                 data-crypto-name="${crypto.name}"
-                                 data-crypto-symbol="${crypto.symbol}"
-                                 title="Voir graphique détaillé">
-                             <i class="fas fa-chart-line"></i>
+                 <tr style=\"cursor: pointer;\" class=\"crypto-list-row\" data-crypto-id=\"${crypto.id}\" data-crypto-name=\"${crypto.name}\" data-crypto-price-usd=\"${crypto.price_usd_raw}\" data-crypto-symbol=\"${crypto.symbol}\">
+                     <td class=\"align-middle\"><img src=\"${crypto.image_url || 'https://via.placeholder.com/20'}\" alt=\"${crypto.symbol || ''}\" width=\"20\" height=\"20\"></td>
+                     <td class=\"align-middle\">${crypto.rank || '#'}</td>
+                     <td class=\"align-middle\">${crypto.name || 'N/A'} <small class=\"text-muted\">(${crypto.symbol || 'N/A'})</small></td>
+                     <td class=\"align-middle\">${formatUsd(crypto.price_usd_raw)}</td>
+                     <td class=\"align-middle ${changeClass}\">${crypto.change_24h || 'N/A'}</td>
+                     <td class=\"align-middle\">${crypto.market_cap || 'N/A'}</td>
+                     <td class=\"align-middle\" style=\"width: 100px; height: 40px;\"><canvas id=\"${chartId}\" style=\"max-height: 40px;\"></canvas></td>
+                     <td class=\"align-middle text-center\">
+                         <button class=\"btn btn-sm btn-outline-secondary view-chart-btn\"
+                                 data-bs-toggle=\"modal\"
+                                 data-bs-target=\"#cryptoChartModal\"  /* <<< Vérifiez cet attribut */
+                                 data-crypto-id=\"${crypto.id}\"
+                                 data-crypto-name=\"${crypto.name}\"
+                                 data-crypto-symbol=\"${crypto.symbol}\"
+                                 title=\"Voir graphique détaillé\">
+                             <i class=\"fas fa-chart-line\"></i>
                          </button>
-                         <button class="btn btn-sm btn-outline-success buy-btn-quick ms-1" title="Acheter ${crypto.symbol}"
-                                 data-crypto-id="${crypto.id}"
-                                 data-crypto-name="${crypto.name}"
-                                 data-crypto-price-usd="${crypto.price_usd_raw}"
-                                 data-crypto-symbol="${crypto.symbol}">
-                             <i class="fas fa-shopping-cart"></i>
+                         <button class=\"btn btn-sm btn-outline-success buy-btn-quick ms-1\" title=\"Acheter ${crypto.symbol}\"
+                                 data-crypto-id=\"${crypto.id}\"
+                                 data-crypto-name=\"${crypto.name}\"
+                                 data-crypto-price-usd=\"${crypto.price_usd_raw}\"
+                                 data-crypto-symbol=\"${crypto.symbol}\">
+                             <i class=\"fas fa-shopping-cart\"></i>
                          </button>
-                         <button class="btn btn-sm btn-outline-danger sell-btn-quick ms-1" title="Vendre ${crypto.symbol}"
-                                 data-crypto-id="${crypto.id}"
-                                 data-crypto-name="${crypto.name}"
-                                 data-crypto-price-usd="${crypto.price_usd_raw}"
-                                 data-crypto-symbol="${crypto.symbol}">
-                             <i class="fas fa-dollar-sign"></i>
+                         <button class=\"btn btn-sm btn-outline-danger sell-btn-quick ms-1\" title=\"Vendre ${crypto.symbol}\"
+                                 data-crypto-id=\"${crypto.id}\"
+                                 data-crypto-name=\"${crypto.name}\"
+                                 data-crypto-price-usd=\"${crypto.price_usd_raw}\"
+                                 data-crypto-symbol=\"${crypto.symbol}\">
+                             <i class=\"fas fa-dollar-sign\"></i>
                          </button>
                      </td>
                  </tr>`;
@@ -380,16 +398,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Main Fetch Function ---
     async function fetchDashboardData() {
-        if(holdingsTableBody) holdingsTableBody.innerHTML = '<tr class="loading-placeholder"><td colspan="5">Chargement des actifs... <i class="fas fa-spinner fa-spin"></i></td></tr>';
-        if(cryptoListTableBody) cryptoListTableBody.innerHTML = '<tr class="loading-placeholder"><td colspan="8">Chargement des cryptomonnaies... <i class="fas fa-spinner fa-spin"></i></td></tr>';
+        // Set loading placeholders
+        if(holdingsTableBody) holdingsTableBody.innerHTML = '<tr class=\"loading-placeholder\"><td colspan=\"5\">Chargement des actifs... <i class=\"fas fa-spinner fa-spin\"></i></td></tr>';
+        if(cryptoListTableBody) cryptoListTableBody.innerHTML = '<tr class=\"loading-placeholder\"><td colspan=\"8\">Chargement des cryptomonnaies... <i class=\"fas fa-spinner fa-spin\"></i></td></tr>';
         if(accountTypeEl) accountTypeEl.textContent = 'Chargement...';
         if(accountStatusEl) { accountStatusEl.textContent = 'Chargement...'; accountStatusEl.className = 'badge account-status'; }
         if(accountLastLoginEl) accountLastLoginEl.textContent = 'Chargement...';
         if(balanceAmountEl) balanceAmountEl.textContent = 'Chargement...';
         if (portfolioTotalValueEl) portfolioTotalValueEl.textContent = 'Chargement...';
         if (portfolioCryptoValueEl) portfolioCryptoValueEl.textContent = '';
-        if (portfolioChange24hEl) portfolioChange24hEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-        if (weeklyGainEl) weeklyGainEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Chargement...';
+        if (portfolioChange24hEl) portfolioChange24hEl.innerHTML = '<i class=\"fa-solid fa-spinner fa-spin\"></i>';
+        if (weeklyGainEl) weeklyGainEl.innerHTML = '<i class=\"fa-solid fa-spinner fa-spin me-1\"></i> Chargement...';
 
         try {
             const [dashResponse, listResponse] = await Promise.all([
@@ -398,57 +417,96 @@ document.addEventListener('DOMContentLoaded', function() {
             ]);
 
             // Process Dashboard Data
-            if (!dashResponse.ok) console.error(`Dashboard API error! status: ${dashResponse.status}`);
+            if (!dashResponse.ok) {
+                 console.error(`Dashboard API error! status: ${dashResponse.status}`);
+                 throw new Error('Failed to fetch dashboard data.'); // Throw error to prevent further processing
+             }
             const resultDash = await dashResponse.json();
             if (resultDash.success && resultDash.data) {
                 const data = resultDash.data;
+
+                // Update account details section
                 if (accountTypeEl) accountTypeEl.textContent = data.account.type;
                 if (accountStatusEl) { accountStatusEl.textContent = data.account.status; accountStatusEl.className = `badge account-status ${data.account.status === 'Active' ? 'bg-success' : 'bg-warning'}`; }
                 if (accountLastLoginEl) accountLastLoginEl.textContent = data.account.last_login;
                 userBalanceRaw = data.account.balance_cad_raw;
                 if (balanceAmountEl) balanceAmountEl.textContent = data.account.balance_cad_formatted;
                 if (hiddenBalanceEl) hiddenBalanceEl.textContent = '******$ CAD';
+
+                 // Store user fullname and email for profile form (NEW/CORRECTED)
+                 currentUserFullname = data.account.fullname || '';
+                 currentUserEmail = data.account.email || '';
+                 // Update Navbar Dropdown immediately if needed
+                 const navbarDropdownButton = document.getElementById('navbarDropdown');
+                 if (navbarDropdownButton && currentUserFullname) {
+                    let buttonText = `Compte (${currentUserFullname})`;
+                    // Clear existing content before setting text
+                    while (navbarDropdownButton.firstChild) {
+                         navbarDropdownButton.removeChild(navbarDropdownButton.firstChild);
+                     }
+                    navbarDropdownButton.appendChild(document.createTextNode(buttonText));
+                    let icon = document.createElement('i');
+                    icon.className = 'fa-solid fa-user ms-2';
+                    navbarDropdownButton.appendChild(icon);
+                 }
+
+                 // Show admin tab/section conditionally
+                 const adminTabLink = document.getElementById('profile-admin-tab');
+                 if (adminCurrencySection && adminTabLink) { // Check both exist
+                     if(data.account.is_admin === true) {
+                        adminCurrencySection.classList.remove('d-none');
+                        adminTabLink.classList.remove('d-none');
+                        loadAdminCurrenciesDropdown();
+                     } else {
+                        adminCurrencySection.classList.add('d-none');
+                        adminTabLink.classList.add('d-none');
+                     }
+                 }
+
+                 // Update portfolio section
                 const portfolioChangeClass = getChangeClass(parseFloat(data.portfolio?.change_24h_percent_formatted));
                 if (portfolioTotalValueEl) portfolioTotalValueEl.textContent = data.portfolio.total_value_cad_formatted;
                 if (portfolioCryptoValueEl) portfolioCryptoValueEl.textContent = `Crypto: ${data.portfolio.crypto_value_cad_formatted}`;
-                if (portfolioChange24hEl) { portfolioChange24hEl.innerHTML = `24h: <span class="${portfolioChangeClass}">${data.portfolio.change_24h_percent_formatted} (${data.portfolio.change_24h_cad_formatted}$)</span>`; }
-                if (weeklyGainEl) weeklyGainEl.textContent = '';
+                if (portfolioChange24hEl) { portfolioChange24hEl.innerHTML = `24h: <span class=\"${portfolioChangeClass}\">${data.portfolio.change_24h_percent_formatted} (${data.portfolio.change_24h_cad_formatted}$)</span>`; }
+                if (weeklyGainEl) weeklyGainEl.textContent = ''; // Clear loading state
+
+                 // Render holdings and chart
                 if (holdingsTableBody) renderHoldings(data.holdings);
                 if (data.portfolioChart) renderPortfolioChart(data.portfolioChart);
 
-                // NEW: Show admin section and load dropdown if user is admin
-                if (adminCurrencySection && data.account.is_admin === true) {
-                    adminCurrencySection.classList.remove('d-none');
-                    loadAdminCurrenciesDropdown(); // Load currencies into the admin dropdown
-                } else if (adminCurrencySection) {
-                    adminCurrencySection.classList.add('d-none'); // Ensure it's hidden for non-admins
-                }
-
             } else {
                 console.error('Dashboard API data processing failed:', resultDash.message || 'Unknown error');
+                // Display error state in UI
                 if (accountTypeEl) accountTypeEl.textContent = 'Erreur';
-                if (holdingsTableBody) holdingsTableBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Erreur chargement actifs.</td></tr>';
+                if (holdingsTableBody) holdingsTableBody.innerHTML = '<tr><td colspan=\"5\" class=\"text-center text-danger\">Erreur chargement actifs.</td></tr>';
             }
 
             // Process Crypto List Data
-            if (!listResponse.ok) console.error(`Crypto List API error! status: ${listResponse.status}`);
-            const resultList = await listResponse.json();
-            if (resultList.success && resultList.data) {
-                if (cryptoListTableBody) renderCryptoList(resultList.data); // Appel qui génère les boutons
-            } else {
-                console.error('Crypto List API data processing failed:', resultList.message || 'Unknown error');
-                if (cryptoListTableBody) cryptoListTableBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Erreur chargement cryptos.</td></tr>';
-            }
+            if (!listResponse.ok) {
+                 console.error(`Crypto List API error! status: ${listResponse.status}`);
+                 // Don't throw, just show error in the table
+                 if (cryptoListTableBody) cryptoListTableBody.innerHTML = '<tr><td colspan=\"8\" class=\"text-center text-danger\">Erreur chargement cryptos.</td></tr>';
+             } else {
+                 const resultList = await listResponse.json();
+                 if (resultList.success && resultList.data) {
+                     if (cryptoListTableBody) renderCryptoList(resultList.data);
+                 } else {
+                     console.error('Crypto List API data processing failed:', resultList.message || 'Unknown error');
+                     if (cryptoListTableBody) cryptoListTableBody.innerHTML = '<tr><td colspan=\"8\" class=\"text-center text-danger\">Erreur chargement cryptos.</td></tr>';
+                 }
+             }
 
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
-            if (holdingsTableBody?.querySelector('.loading-placeholder')) holdingsTableBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Erreur chargement actifs.</td></tr>';
-            if (cryptoListTableBody?.querySelector('.loading-placeholder')) cryptoListTableBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Erreur chargement cryptos.</td></tr>';
+            // General error display for major failures
+            if (holdingsTableBody?.querySelector('.loading-placeholder')) holdingsTableBody.innerHTML = '<tr><td colspan=\"5\" class=\"text-center text-danger\">Erreur chargement actifs.</td></tr>';
+            if (cryptoListTableBody?.querySelector('.loading-placeholder')) cryptoListTableBody.innerHTML = '<tr><td colspan=\"8\" class=\"text-center text-danger\">Erreur chargement cryptos.</td></tr>';
             if (accountTypeEl?.textContent === 'Chargement...') accountTypeEl.textContent = 'Erreur';
         }
     }
 
-    // --- Event Listeners ---
+
+    // --- Event Listeners ---\
     if (toggleBalanceBtn && balanceAmountEl && hiddenBalanceEl) {
         toggleBalanceBtn.addEventListener('click', () => {
             balanceVisible = !balanceVisible;
@@ -592,7 +650,7 @@ document.addEventListener('DOMContentLoaded', function() {
         quantityInput.addEventListener('input', () => updateTradeForm('quantity'));
     }
 
-    // --- NEW: Admin Functions ---
+    // --- NEW: Admin Functions ---\
 
     // Helper to display messages in the admin modal section
     function displayAdminCurrencyMessage(message, isError = false) {
@@ -631,8 +689,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
 
             if (result.success && Array.isArray(result.data)) {
-                // Clear existing options (keep the first "Add New" option)
-                adminCurrencySelect.innerHTML = '<option value="new" selected>-- Ajouter Nouvelle Crypto --</option>';
+                // Clear existing options (keep the first \"Add New\" option)
+                adminCurrencySelect.innerHTML = '<option value=\"new\" selected>-- Ajouter Nouvelle Crypto --</option>';
                 result.data.forEach(currency => {
                     const option = document.createElement('option');
                     option.value = currency.id;
@@ -722,7 +780,7 @@ document.addEventListener('DOMContentLoaded', function() {
              };
 
              this.disabled = true; // Prevent double clicks
-             this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Ajout...';
+             this.innerHTML = '<i class=\"fas fa-spinner fa-spin me-1\"></i> Ajout...';
 
              try {
                  const response = await fetch(`${API_BASE_URL}/admin/currency/add`, {
@@ -746,7 +804,7 @@ document.addEventListener('DOMContentLoaded', function() {
                  displayAdminCurrencyMessage(`Erreur ajout: ${error.message}`, true);
              } finally {
                  this.disabled = false;
-                 this.innerHTML = '<i class="fas fa-plus me-1"></i> Ajouter';
+                 this.innerHTML = '<i class=\"fas fa-plus me-1\"></i> Ajouter';
              }
         });
     }
@@ -777,7 +835,7 @@ document.addEventListener('DOMContentLoaded', function() {
              };
 
              this.disabled = true;
-             this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Mise à jour...';
+             this.innerHTML = '<i class=\"fas fa-spinner fa-spin me-1\"></i> Mise à jour...';
 
             try {
                  const response = await fetch(`${API_BASE_URL}/admin/currency/update/${currencyId}`, {
@@ -800,7 +858,7 @@ document.addEventListener('DOMContentLoaded', function() {
                  displayAdminCurrencyMessage(`Erreur MàJ: ${error.message}`, true);
              } finally {
                  this.disabled = false;
-                 this.innerHTML = '<i class="fas fa-save me-1"></i> Mettre à jour';
+                 this.innerHTML = '<i class=\"fas fa-save me-1\"></i> Mettre à jour';
              }
         });
     }
@@ -818,7 +876,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (confirm(`Êtes-vous sûr de vouloir supprimer ${currencyName} (ID: ${currencyId}) ? Cette action est irréversible et peut échouer si des portefeuilles la contiennent.`)) {
 
                 this.disabled = true;
-                this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Suppression...';
+                this.innerHTML = '<i class=\"fas fa-spinner fa-spin me-1\"></i> Suppression...';
 
                 try {
                     const response = await fetch(`${API_BASE_URL}/admin/currency/delete/${currencyId}`, {
@@ -840,13 +898,238 @@ document.addEventListener('DOMContentLoaded', function() {
                     displayAdminCurrencyMessage(`Erreur suppression: ${error.message}`, true);
                 } finally {
                     this.disabled = false;
-                    this.innerHTML = '<i class="fas fa-trash me-1"></i> Supprimer';
+                    this.innerHTML = '<i class=\"fas fa-trash me-1\"></i> Supprimer';
                 }
             }
         });
     }
 
     // --- End NEW Admin Event Listeners ---
+
+    // --- NEW: User Profile Functions ---
+
+    // Helper to display messages in the user profile modal section
+    function displayUserProfileMessage(message, isError = false) {
+        if (!userProfileMessageArea) return;
+        userProfileMessageArea.textContent = message;
+        userProfileMessageArea.className = `alert alert-${isError ? 'danger' : 'success'}`;
+        userProfileMessageArea.classList.remove('d-none');
+         // Optionally hide after a few seconds
+         setTimeout(() => {
+            if (userProfileMessageArea) {
+                 userProfileMessageArea.classList.add('d-none');
+                 userProfileMessageArea.textContent = '';
+                 userProfileMessageArea.className = 'mb-3'; // Reset class
+             }
+         }, 5000); // Hide after 5 seconds
+    }
+
+    // --- End NEW User Profile Functions ---
+
+
+    // --- Event Listeners Modification/Addition ---
+
+    // Listener for Profile & Settings Modal Initialization (MODIFIED)
+    if (profileSettingsModalEl) {
+        profileSettingsModalEl.addEventListener('show.bs.modal', function () {
+            // Populate user profile form
+            if (profileFullnameInput) profileFullnameInput.value = currentUserFullname;
+            if (profileEmailInput) profileEmailInput.value = currentUserEmail;
+
+            // Clear password fields and messages
+            if (profileCurrentPasswordInput) profileCurrentPasswordInput.value = '';
+            if (profileNewPasswordInput) profileNewPasswordInput.value = '';
+            if (profileConfirmPasswordInput) profileConfirmPasswordInput.value = '';
+            if (userProfileMessageArea) userProfileMessageArea.classList.add('d-none');
+            if (adminMessageArea) adminMessageArea.classList.add('d-none'); // Also clear admin messages
+
+            // Load transaction history when modal opens
+            fetchAndRenderTransactions();
+
+            // Reset admin form if present
+            if (adminCurrencySelect && adminCurrencySelect.value !== 'new') {
+                 // Optionally reset admin form or leave as is depending on desired UX
+                // clearAdminCurrencyForm();
+                // adminCurrencySelect.value = 'new';
+            }
+        });
+    }
+
+    // Listener for User Profile Form Submission (NEW)
+    if (userProfileForm) {
+        userProfileForm.addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            if (!userProfileForm.checkValidity()) {
+                 displayUserProfileMessage('Veuillez remplir le nom et l\'email.', true);
+                 userProfileForm.reportValidity();
+                return;
+            }
+
+            const newPassword = profileNewPasswordInput.value;
+            const confirmPassword = profileConfirmPasswordInput.value;
+
+            // Client-side validation for passwords
+            if (newPassword !== confirmPassword) {
+                displayUserProfileMessage('Les nouveaux mots de passe ne correspondent pas.', true);
+                return;
+            }
+            if (newPassword && !profileCurrentPasswordInput.value) {
+                 displayUserProfileMessage('Veuillez entrer votre mot de passe actuel pour définir un nouveau mot de passe.', true);
+                return;
+            }
+
+            const formData = {
+                fullname: profileFullnameInput.value,
+                email: profileEmailInput.value,
+                currentPassword: profileCurrentPasswordInput.value,
+                newPassword: newPassword,
+                confirmPassword: confirmPassword
+            };
+
+            if (saveProfileButton) {
+                saveProfileButton.disabled = true;
+                saveProfileButton.innerHTML = '<i class=\"fas fa-spinner fa-spin me-1\"></i> Sauvegarde...';
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/user/update`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                     throw new Error(result.message || `Erreur ${response.status}`);
+                 }
+
+                displayUserProfileMessage(result.message || 'Profil mis à jour avec succès!');
+
+                 // Update stored user info if changed
+                if (result.data?.fullname) {
+                     currentUserFullname = result.data.fullname;
+                     // Optionally update UI immediately (e.g., Navbar dropdown)
+                     const navbarDropdownButton = document.getElementById('navbarDropdown');
+                     if (navbarDropdownButton) {
+                        // Construct the new text content more robustly
+                        let buttonText = `Compte (${currentUserFullname})`;
+                        navbarDropdownButton.textContent = buttonText;
+                        // Re-add the icon
+                        let icon = document.createElement('i');
+                        icon.className = 'fa-solid fa-user ms-2'; // Add margin if needed
+                        navbarDropdownButton.appendChild(icon);
+                     }
+                }
+                currentUserEmail = profileEmailInput.value; // Assume email update worked if success
+
+                // Clear password fields after successful update
+                if (profileCurrentPasswordInput) profileCurrentPasswordInput.value = '';
+                if (profileNewPasswordInput) profileNewPasswordInput.value = '';
+                if (profileConfirmPasswordInput) profileConfirmPasswordInput.value = '';
+
+                 // Optionally: Reload all dashboard data after a short delay
+                 // setTimeout(fetchDashboardData, 1500);
+
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                displayUserProfileMessage(`Erreur mise à jour profil: ${error.message}`, true);
+                 // Clear only password fields on error
+                if (profileCurrentPasswordInput) profileCurrentPasswordInput.value = '';
+                if (profileNewPasswordInput) profileNewPasswordInput.value = '';
+                if (profileConfirmPasswordInput) profileConfirmPasswordInput.value = '';
+            } finally {
+                if (saveProfileButton) {
+                    saveProfileButton.disabled = false;
+                    saveProfileButton.innerHTML = '<i class=\"fas fa-save me-1\"></i> Sauvegarder Profil';
+                }
+            }
+        });
+    }
+
+    // --- NEW: Transaction History Functions ---
+
+    // Render the transaction history table
+    function renderTransactionsTable(transactions) {
+        if (!transactionHistoryTableBody) return;
+
+        transactionHistoryTableBody.innerHTML = ''; // Clear previous content or loading state
+
+        if (!transactions || transactions.length === 0) {
+            transactionHistoryTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Aucune transaction trouvée.</td></tr>';
+             if (downloadCsvBtn) downloadCsvBtn.disabled = true;
+             if (downloadPdfBtn) downloadPdfBtn.disabled = true;
+            return;
+        }
+
+        transactions.forEach(tx => {
+            const row = `
+                <tr>
+                    <td>${tx.timestamp || 'N/A'}</td>
+                    <td class="${tx.type_class || ''}">${tx.type || 'N/A'}</td>
+                    <td>${tx.currency_name || 'N/A'} (${tx.currency_symbol || 'N/A'})</td>
+                    <td>${tx.quantity || 'N/A'}</td>
+                    <td>$${tx.price_per_unit_usd || 'N/A'}</td>
+                    <td class="${tx.type_class || ''} fw-bold">${tx.total_amount_cad_display || 'N/A'}</td>
+                </tr>`;
+            transactionHistoryTableBody.insertAdjacentHTML('beforeend', row);
+        });
+
+        // Enable download buttons now that there is data
+         if (downloadCsvBtn) downloadCsvBtn.disabled = false;
+         if (downloadPdfBtn) downloadPdfBtn.disabled = false;
+    }
+
+    // Fetch transaction history from API
+    async function fetchAndRenderTransactions() {
+        if (!transactionHistoryTableBody) return;
+
+        // Show loading state
+        transactionHistoryTableBody.innerHTML = '<tr class="loading-placeholder"><td colspan="6" class="text-center py-4">Chargement de l\'historique... <i class="fas fa-spinner fa-spin"></i></td></tr>';
+        if (downloadCsvBtn) downloadCsvBtn.disabled = true;
+        if (downloadPdfBtn) downloadPdfBtn.disabled = true;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/user/transactions`);
+            if (!response.ok) {
+                throw new Error(`Erreur API: ${response.status}`);
+            }
+            const result = await response.json();
+
+            if (result.success && Array.isArray(result.data)) {
+                renderTransactionsTable(result.data);
+            } else {
+                throw new Error(result.message || 'Impossible de charger les transactions.');
+            }
+
+        } catch (error) {
+            console.error('Error fetching transaction history:', error);
+            if (transactionHistoryTableBody) {
+                transactionHistoryTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Erreur chargement historique: ${error.message}</td></tr>`;
+            }
+        }
+    }
+
+    // --- Event Listeners for Download Buttons (NEW) ---
+
+    if (downloadCsvBtn) {
+        downloadCsvBtn.addEventListener('click', () => {
+            // Simply navigate to the CSV download route
+            window.location.href = `${API_BASE_URL}/user/transactions/csv`;
+        });
+    }
+
+    if (downloadPdfBtn) {
+        // Disable the button visually
+        downloadPdfBtn.disabled = true;
+        downloadPdfBtn.style.cursor = 'not-allowed'; // Indicate it's disabled
+
+        downloadPdfBtn.addEventListener('click', () => {
+            // Navigate to the PDF download route
+            // The backend will handle PDF generation or show an error if the library is missing.
+            alert('La fonctionnalité de téléchargement PDF est en cours de développement.');
+        });
+    }
 
     // --- Initial Load ---
     fetchDashboardData(); // This now potentially shows the admin section and loads its dropdown

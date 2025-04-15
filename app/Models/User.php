@@ -61,6 +61,60 @@ class User {
          return $stmt->execute();
     }
 
+    // NEW: Update user profile (fullname, email)
+    public function updateProfile($id, $fullname, $email) {
+        // Check if the new email is already taken by ANOTHER user
+        $stmt = $this->db->prepare("SELECT id FROM users WHERE email = :email AND id != :id");
+        $stmt->bindParam(':email', $email);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        if ($stmt->fetch()) {
+            // Email already exists for another user
+            return false; // Indicate failure due to email conflict
+        }
+
+        // Proceed with update
+        $sql = "UPDATE users SET fullname = :fullname, email = :email WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':fullname', $fullname);
+        $stmt->bindParam(':email', $email);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    // NEW: Update user password
+    public function updatePassword($id, $currentPassword, $newPassword) {
+        // 1. Get the current password hash
+        $stmt = $this->db->prepare("SELECT password_hash FROM users WHERE id = :id");
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $user = $stmt->fetch();
+
+        if (!$user) {
+            return 'user_not_found';
+        }
+
+        // 2. Verify the current password
+        if (!password_verify($currentPassword, $user['password_hash'])) {
+            return 'invalid_current_password';
+        }
+
+        // 3. Hash the new password
+        $newPasswordHash = password_hash($newPassword, PASSWORD_BCRYPT, ['cost' => PASSWORD_COST]);
+
+        // 4. Update the password hash in the database
+        $sql = "UPDATE users SET password_hash = :password_hash WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':password_hash', $newPasswordHash);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+
+        if ($stmt->execute()) {
+            return 'success';
+        } else {
+            return 'update_failed';
+        }
+    }
+
     public function verifyPassword($password, $hash) {
         return password_verify($password, $hash);
     }

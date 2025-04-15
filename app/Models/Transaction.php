@@ -41,6 +41,19 @@ class Transaction {
          return $stmt->fetchAll();
     }
 
+    // NEW: Find ALL transactions for a user
+    public function findAllByUser($userId) {
+        $sql = "SELECT t.*, c.symbol as currency_symbol, c.name as currency_name
+                FROM transactions t
+                JOIN currencies c ON t.currency_id = c.id
+                WHERE t.user_id = :user_id
+                ORDER BY t.timestamp DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
       // Optional: Get data for portfolio performance chart
     public function getPortfolioValueHistory($userId) {
          // This is complex. It requires summing asset values at different points in time.

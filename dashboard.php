@@ -249,76 +249,156 @@
 
     <!-- Profile & Settings Modal -->
     <div class="modal fade" id="profileSettingsModal" tabindex="-1" aria-labelledby="profileSettingsModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="profileSettingsModalLabel">Profil et Paramètres</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <!-- Contenu de la modale (Profil et Paramètres) sera ajouté ici -->
-            <p>Contenu du profil et des paramètres...</p>
+            <!-- Tab Navigation -->
+            <nav>
+              <div class="nav nav-tabs mb-3" id="profileTab" role="tablist">
+                <button class="nav-link active" id="profile-user-tab" data-bs-toggle="tab" data-bs-target="#profile-user-pane" type="button" role="tab" aria-controls="profile-user-pane" aria-selected="true">Mes Informations</button>
+                <!-- Admin tab link (initially hidden) -->
+                <button class="nav-link d-none" id="profile-admin-tab" data-bs-toggle="tab" data-bs-target="#profile-admin-pane" type="button" role="tab" aria-controls="profile-admin-pane" aria-selected="false">Gestion Cryptos (Admin)</button>
+                <!-- Transaction History tab link -->
+                <button class="nav-link" id="profile-history-tab" data-bs-toggle="tab" data-bs-target="#profile-history-pane" type="button" role="tab" aria-controls="profile-history-pane" aria-selected="false">Historique</button>
+              </div>
+            </nav>
 
-            <!-- NEW: Admin Currency Management Section (Initially hidden) -->
-            <div id="adminCurrencyManagementSection" class="mt-4 pt-4 border-top d-none">
-                <h5 class="mb-3"><i class="fas fa-coins me-2"></i>Gestion des Cryptomonnaies (Admin)</h5>
-                <div id="adminCurrencyMessage" class="mb-3"></div> <!-- For success/error messages -->
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label for="adminSelectCurrency" class="form-label">Sélectionner / Ajouter</label>
-                        <select class="form-select" id="adminSelectCurrency">
-                            <option value="new" selected>-- Ajouter Nouvelle Crypto --</option>
-                            <!-- Options will be populated by JS -->
-                        </select>
-                    </div>
-                </div>
+            <!-- Tab Content -->
+            <div class="tab-content" id="profileTabContent">
 
-                <form id="adminCurrencyForm" class="mt-3">
-                    <input type="hidden" id="adminCurrencyId">
+              <!-- User Information Tab Pane -->
+              <div class="tab-pane fade show active" id="profile-user-pane" role="tabpanel" aria-labelledby="profile-user-tab" tabindex="0">
+                <h5 class="mb-3"><i class="fas fa-user-edit me-2"></i>Mes Informations</h5>
+                <div id="userProfileMessage" class="mb-3"></div> <!-- For success/error messages -->
+                <form id="userProfileForm">
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label for="adminCurrencyName" class="form-label">Nom</label>
-                            <input type="text" class="form-control" id="adminCurrencyName" required>
+                            <label for="profileFullname" class="form-label">Nom complet</label>
+                            <input type="text" class="form-control" id="profileFullname" required>
                         </div>
                         <div class="col-md-6">
-                            <label for="adminCurrencySymbol" class="form-label">Symbole (ex: BTC)</label>
-                            <input type="text" class="form-control" id="adminCurrencySymbol" required maxlength="10">
+                            <label for="profileEmail" class="form-label">Adresse Courriel</label>
+                            <input type="email" class="form-control" id="profileEmail" required>
                         </div>
                     </div>
-                     <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label for="adminCurrencyPrice" class="form-label">Prix Actuel (USD)</label>
-                            <input type="number" step="any" class="form-control" id="adminCurrencyPrice" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="adminCurrencyChange" class="form-label">Variation 24h (%)</label>
-                            <input type="number" step="any" class="form-control" id="adminCurrencyChange" required>
-                        </div>
-                    </div>
+                    <hr>
+                    <p class="text-muted small mb-2">Pour changer votre mot de passe, remplissez les champs ci-dessous. Sinon, laissez-les vides.</p>
                      <div class="row g-3 mb-3">
                          <div class="col-md-6">
-                            <label for="adminCurrencyMarketCap" class="form-label">Market Cap (USD)</label>
-                            <input type="number" step="any" class="form-control" id="adminCurrencyMarketCap" required>
+                            <label for="profileCurrentPassword" class="form-label">Mot de passe actuel</label>
+                            <input type="password" class="form-control" id="profileCurrentPassword" placeholder="Requis si changement de mot de passe">
                         </div>
-                         <div class="col-md-6">
-                             <label for="adminCurrencyVolatility" class="form-label">Volatilité Base (ex: 0.015)</label>
-                            <input type="number" step="0.0001" class="form-control" id="adminCurrencyVolatility" required>
-                        </div>
-                    </div>
+                     </div>
                      <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label for="adminCurrencyTrend" class="form-label">Tendance Base (ex: 0.001)</label>
-                            <input type="number" step="0.0001" class="form-control" id="adminCurrencyTrend" required>
+                            <label for="profileNewPassword" class="form-label">Nouveau mot de passe</label>
+                            <input type="password" class="form-control" id="profileNewPassword">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="profileConfirmPassword" class="form-label">Confirmer nouveau mot de passe</label>
+                            <input type="password" class="form-control" id="profileConfirmPassword">
                         </div>
                     </div>
-                    <div class="d-flex justify-content-end gap-2 mt-4">
-                        <button type="button" class="btn btn-success" id="adminAddCurrencyBtn"><i class="fas fa-plus me-1"></i> Ajouter</button>
-                        <button type="button" class="btn btn-primary" id="adminUpdateCurrencyBtn" disabled><i class="fas fa-save me-1"></i> Mettre à jour</button>
-                        <button type="button" class="btn btn-danger" id="adminDeleteCurrencyBtn" disabled><i class="fas fa-trash me-1"></i> Supprimer</button>
+                    <div class="d-flex justify-content-end mt-3">
+                         <button type="submit" class="btn btn-primary" id="saveProfileButton"><i class="fas fa-save me-1"></i> Sauvegarder Profil</button>
                     </div>
                 </form>
+              </div>
+
+              <!-- Admin Currency Management Tab Pane (content moved here, still controlled by d-none on inner div) -->
+              <div class="tab-pane fade" id="profile-admin-pane" role="tabpanel" aria-labelledby="profile-admin-tab" tabindex="0">
+                <div id="adminCurrencyManagementSection" class="d-none"> <!-- Keep d-none here, controlled by JS -->
+                    <h5 class="mb-3"><i class="fas fa-coins me-2"></i>Gestion des Cryptomonnaies</h5>
+                    <div id="adminCurrencyMessage" class="mb-3"></div> <!-- For success/error messages -->
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="adminSelectCurrency" class="form-label">Sélectionner / Ajouter</label>
+                            <select class="form-select" id="adminSelectCurrency">
+                                <option value="new" selected>-- Ajouter Nouvelle Crypto --</option>
+                                <!-- Options will be populated by JS -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <form id="adminCurrencyForm" class="mt-3">
+                        <input type="hidden" id="adminCurrencyId">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="adminCurrencyName" class="form-label">Nom</label>
+                                <input type="text" class="form-control" id="adminCurrencyName" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="adminCurrencySymbol" class="form-label">Symbole (ex: BTC)</label>
+                                <input type="text" class="form-control" id="adminCurrencySymbol" required maxlength="10">
+                            </div>
+                        </div>
+                         <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="adminCurrencyPrice" class="form-label">Prix Actuel (USD)</label>
+                                <input type="number" step="any" class="form-control" id="adminCurrencyPrice" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="adminCurrencyChange" class="form-label">Variation 24h (%)</label>
+                                <input type="number" step="any" class="form-control" id="adminCurrencyChange" required>
+                            </div>
+                        </div>
+                         <div class="row g-3 mb-3">
+                             <div class="col-md-6">
+                                <label for="adminCurrencyMarketCap" class="form-label">Market Cap (USD)</label>
+                                <input type="number" step="any" class="form-control" id="adminCurrencyMarketCap" required>
+                            </div>
+                             <div class="col-md-6">
+                                 <label for="adminCurrencyVolatility" class="form-label">Volatilité Base (ex: 0.015)</label>
+                                <input type="number" step="0.0001" class="form-control" id="adminCurrencyVolatility" required>
+                            </div>
+                        </div>
+                         <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="adminCurrencyTrend" class="form-label">Tendance Base (ex: 0.001)</label>
+                                <input type="number" step="0.0001" class="form-control" id="adminCurrencyTrend" required>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <button type="button" class="btn btn-success" id="adminAddCurrencyBtn"><i class="fas fa-plus me-1"></i> Ajouter</button>
+                            <button type="button" class="btn btn-primary" id="adminUpdateCurrencyBtn" disabled><i class="fas fa-save me-1"></i> Mettre à jour</button>
+                            <button type="button" class="btn btn-danger" id="adminDeleteCurrencyBtn" disabled><i class="fas fa-trash me-1"></i> Supprimer</button>
+                        </div>
+                    </form>
+                </div>
+              </div>
+
+              <!-- Transaction History Tab Pane -->
+              <div class="tab-pane fade" id="profile-history-pane" role="tabpanel" aria-labelledby="profile-history-tab" tabindex="0">
+                <h5 class="mb-3"><i class="fas fa-history me-2"></i>Historique des Transactions</h5>
+                <div class="d-flex justify-content-end gap-2 mb-3">
+                    <button class="btn btn-sm btn-outline-secondary" id="downloadCsvBtn" disabled><i class="fas fa-file-csv me-1"></i> Télécharger CSV</button>
+                    <button class="btn btn-sm btn-outline-danger" id="downloadPdfBtn" disabled><i class="fas fa-file-pdf me-1"></i> Télécharger PDF</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped table-hover" style="font-size: 0.9rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Date</th>
+                                <th scope="col">Type</th>
+                                <th scope="col">Crypto</th>
+                                <th scope="col">Quantité</th>
+                                <th scope="col">Prix/Unité (USD)</th>
+                                <th scope="col">Montant Total (CAD)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionHistoryTableBody">
+                            <!-- Transactions will be loaded here by JS -->
+                            <tr class="loading-placeholder"><td colspan="6" class="text-center py-4">Chargement de l'historique... <i class="fas fa-spinner fa-spin"></i></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+              </div>
+
             </div>
-            <!-- End Admin Section -->
 
           </div>
           <div class="modal-footer">

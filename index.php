@@ -76,6 +76,16 @@ $router->get('/api/crypto/chart/{id}', 'App\Controllers\MarketController@getCryp
 $router->post('/api/transaction/buy', 'App\Controllers\TransactionController@buy');
 $router->post('/api/transaction/sell', 'App\Controllers\TransactionController@sell');
 
+// --- API Route for User Profile Update (Protected) ---
+$router->post('/api/user/update', 'App\Controllers\UserController@updateProfile');
+
+// --- API Route for User Transaction History (Protected) ---
+$router->get('/api/user/transactions', 'App\Controllers\UserController@getUserTransactions');
+
+// --- API Routes for Transaction Download (Protected) ---
+$router->get('/api/user/transactions/csv', 'App\Controllers\UserController@downloadTransactionsCsv');
+$router->get('/api/user/transactions/pdf', 'App\Controllers\UserController@downloadTransactionsPdf'); // Add PDF route
+
 // --- Admin Route Example (Protected) ---
 $router->get('/admin', 'App\Controllers\AdminController@index');
 
