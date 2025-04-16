@@ -123,6 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let modalChartInstance = null;
 
     // --- Store context for the confirmation modal ---
+    let currentChartFetchController = null;
     let confirmationContext = {
         action: '',
         crypto: null,
@@ -494,23 +495,40 @@ document.addEventListener('DOMContentLoaded', function() {
      }
 
     async function displayChartInModal(modalData) {
-        const { id: currencyId, name: cryptoName, symbol: cryptoSymbol, priceCad, changePercent, marketCap } = modalData;
+        console.log(`>>> Entering displayChartInModal for ID: ${modalData?.id}`);
 
+        // Check all required modal elements exist
         if (!cryptoChartModalEl || !modalChartLoadingEl || !modalChartContainerEl || !modalChartErrorEl || !modalChartTitleEl || !modalChartCanvas || !modalInfoPriceEl || !modalInfoChangeEl || !modalInfoMarketCapEl || !modalCryptoAmountInput || !modalCryptoQuantityInput || !modalBuyButton || !modalSellButton || !modalSellAllButton || !modalTradeInfoEl)
         {
              console.error("Un ou plusieurs éléments de la modale étendue sont manquants.");
              return;
         }
 
+        // --- Force Cleanup & Reset State FIRST ---
+        if (modalChartInstance) {
+            console.log("   -> Destroying previous modal chart instance.");
+            modalChartInstance.destroy();
+            modalChartInstance = null;
+        }
+        // Abort any pending fetch request for the *previous* chart
+        if (currentChartFetchController) {
+            console.log("   -> Aborting previous chart fetch request.");
+            currentChartFetchController.abort();
+        }
+
+        console.log("   -> Resetting modal DOM elements (show loading, hide chart/error).");
         modalChartLoadingEl.classList.remove('d-none');
         modalChartContainerEl.classList.add('d-none');
         modalChartCanvas.classList.add('d-none');
         modalChartErrorEl.classList.add('d-none');
-        modalChartTitleEl.textContent = `Graphique : ${cryptoName || ''} (${cryptoSymbol || ''})`;
-        if (modalChartInstance) {
-             modalChartInstance.destroy();
-        }
+        // --- End Cleanup & Reset ---
 
+        const { id: currencyId, name: cryptoName, symbol: cryptoSymbol, priceCad, changePercent, marketCap } = modalData;
+
+        // Prepare modal state
+        modalChartTitleEl.textContent = `Graphique : ${cryptoName || ''} (${cryptoSymbol || ''})`;
+
+        // --- Populate Info Section --- (Do this *before* fetching chart)
         modalInfoPriceEl.textContent = formatCurrency(priceCad);
         const changeClass = getChangeClass(changePercent);
         modalInfoChangeEl.innerHTML = `<span class="${changeClass}">${changePercent.toFixed(2)}%</span>`;
@@ -524,72 +542,94 @@ document.addEventListener('DOMContentLoaded', function() {
         const ownedQuantity = userHoldings[currencyId] || 0;
         modalSellAllButton.disabled = !(ownedQuantity && ownedQuantity > 0);
 
+        // --- Setup Listeners (using cloning to prevent duplicates) --- 
         const setupModalListeners = () => {
-            const freshAmountInput = modalCryptoAmountInput.cloneNode(true);
-            const freshQuantityInput = modalCryptoQuantityInput.cloneNode(true);
-            const freshBuyButton = modalBuyButton.cloneNode(true);
-            const freshSellButton = modalSellButton.cloneNode(true);
-            const freshSellAllButton = modalSellAllButton.cloneNode(true);
+            console.log("   -> setupModalListeners: Re-selecting modal trade elements...");
+            const amountInputToReplace = document.getElementById('modalCryptoAmount');
+            const quantityInputToReplace = document.getElementById('modalCryptoQuantity');
+            const buyButtonToReplace = document.getElementById('modalBuyButton');
+            const sellButtonToReplace = document.getElementById('modalSellButton');
+            const sellAllButtonToReplace = document.getElementById('modalSellAllButton');
+            const infoElementForListeners = document.getElementById('modalTradeInfo');
 
-            modalCryptoAmountInput.parentNode.replaceChild(freshAmountInput, modalCryptoAmountInput);
-            modalCryptoQuantityInput.parentNode.replaceChild(freshQuantityInput, modalCryptoQuantityInput);
-            modalBuyButton.parentNode.replaceChild(freshBuyButton, modalBuyButton);
-            modalSellButton.parentNode.replaceChild(freshSellButton, modalSellButton);
-            modalSellAllButton.parentNode.replaceChild(freshSellAllButton, modalSellAllButton);
+            // Check if elements were found *now*
+            if (!amountInputToReplace || !quantityInputToReplace || !buyButtonToReplace || !sellButtonToReplace || !sellAllButtonToReplace || !infoElementForListeners) {
+                console.error("   -> ERROR in setupModalListeners: One or more modal trade elements not found before cloning!");
+                return; // Stop if elements are missing
+            }
+            console.log("   -> setupModalListeners: All elements found.");
 
-            const currentModalAmountInput = document.getElementById('modalCryptoAmount');
-            const currentModalQuantityInput = document.getElementById('modalCryptoQuantity');
-            const currentModalBuyButton = document.getElementById('modalBuyButton');
-            const currentModalSellButton = document.getElementById('modalSellButton');
-            const currentModalSellAllButton = document.getElementById('modalSellAllButton');
-            const currentModalTradeInfoEl = document.getElementById('modalTradeInfo');
+            // Clone elements to remove old listeners
+            const freshAmountInput = amountInputToReplace.cloneNode(true);
+            const freshQuantityInput = quantityInputToReplace.cloneNode(true);
+            const freshBuyButton = buyButtonToReplace.cloneNode(true);
+            const freshSellButton = sellButtonToReplace.cloneNode(true);
+            const freshSellAllButton = sellAllButtonToReplace.cloneNode(true);
 
-            currentModalAmountInput.addEventListener('input', () => {
-                updateCorrespondingTradeInput('amount', currentModalAmountInput, currentModalQuantityInput, modalData.priceCad, currentModalBuyButton, currentModalSellButton, currentModalTradeInfoEl);
+            console.log("   -> setupModalListeners: Replacing elements with clones...");
+            amountInputToReplace.parentNode.replaceChild(freshAmountInput, amountInputToReplace);
+            quantityInputToReplace.parentNode.replaceChild(freshQuantityInput, quantityInputToReplace);
+            buyButtonToReplace.parentNode.replaceChild(freshBuyButton, buyButtonToReplace);
+            sellButtonToReplace.parentNode.replaceChild(freshSellButton, sellButtonToReplace);
+            sellAllButtonToReplace.parentNode.replaceChild(freshSellAllButton, sellAllButtonToReplace);
+
+            console.log("   -> setupModalListeners: Attaching listeners to cloned elements...");
+
+            // Attach listeners to fresh elements
+            freshAmountInput.addEventListener('input', () => {
+                updateCorrespondingTradeInput('amount', freshAmountInput, freshQuantityInput, modalData.priceCad, freshBuyButton, freshSellButton, infoElementForListeners);
             });
-            currentModalQuantityInput.addEventListener('input', () => {
-                updateCorrespondingTradeInput('quantity', currentModalQuantityInput, currentModalAmountInput, modalData.priceCad, currentModalBuyButton, currentModalSellButton, currentModalTradeInfoEl);
+            freshQuantityInput.addEventListener('input', () => {
+                updateCorrespondingTradeInput('quantity', freshQuantityInput, freshAmountInput, modalData.priceCad, freshBuyButton, freshSellButton, infoElementForListeners);
             });
-            currentModalBuyButton.addEventListener('click', () => {
-                const quantity = parseFloat(currentModalQuantityInput.value);
-                const amountCad = parseFloat(currentModalAmountInput.value);
+            freshBuyButton.addEventListener('click', () => {
+                const quantity = parseFloat(freshQuantityInput.value);
+                const amountCad = parseFloat(freshAmountInput.value);
                 // Hide the current chart modal FIRST
                 const chartModalInstance = bootstrap.Modal.getInstance(cryptoChartModalEl);
                 if (chartModalInstance) {
                     chartModalInstance.hide();
                 }
                 // THEN show the confirmation modal
-                showConfirmationModal('Acheter', modalData, quantity, amountCad, currentModalTradeInfoEl);
+                showConfirmationModal('Acheter', modalData, quantity, amountCad, infoElementForListeners);
             });
-            currentModalSellButton.addEventListener('click', () => {
-                const quantity = parseFloat(currentModalQuantityInput.value);
-                const amountCad = parseFloat(currentModalAmountInput.value);
+            freshSellButton.addEventListener('click', () => {
+                const quantity = parseFloat(freshQuantityInput.value);
+                const amountCad = parseFloat(freshAmountInput.value);
                 // Hide the current chart modal FIRST
                 const chartModalInstance = bootstrap.Modal.getInstance(cryptoChartModalEl);
                 if (chartModalInstance) {
                     chartModalInstance.hide();
                 }
                 // THEN show the confirmation modal
-                showConfirmationModal('Vendre', modalData, quantity, amountCad, currentModalTradeInfoEl);
+                showConfirmationModal('Vendre', modalData, quantity, amountCad, infoElementForListeners);
             });
-            currentModalSellAllButton.addEventListener('click', () => {
+            freshSellAllButton.addEventListener('click', () => {
                 const owned = userHoldings[currencyId] || 0;
                 if (owned > 0) {
-                    currentModalQuantityInput.value = owned.toFixed(8);
-                    updateCorrespondingTradeInput('quantity', currentModalQuantityInput, currentModalAmountInput, modalData.priceCad, currentModalBuyButton, currentModalSellButton, currentModalTradeInfoEl);
+                    freshQuantityInput.value = owned.toFixed(8);
+                    updateCorrespondingTradeInput('quantity', freshQuantityInput, freshAmountInput, modalData.priceCad, freshBuyButton, freshSellButton, infoElementForListeners);
                 }
             });
         };
 
         setupModalListeners();
 
+        // --- Create AbortController for the new fetch --- 
+        currentChartFetchController = new AbortController();
+        const signal = currentChartFetchController.signal;
+
+        // --- Fetch and Render Chart --- 
+        console.log(`   -> Initiating fetch for chart data (ID: ${currencyId})...`);
         try {
             const isDarkMode = htmlElement.getAttribute('data-bs-theme') === 'dark';
             if (!currencyId) throw new Error('ID de devise manquant.');
-            const response = await fetch(`${API_BASE_URL}/crypto/chart/${currencyId}`);
+            const response = await fetch(`${API_BASE_URL}/crypto/chart/${currencyId}`, { signal }); // Pass signal
+            console.log(`   -> Fetch response received (Status: ${response.status})`);
             if (!response.ok) throw new Error(`Erreur API (${response.status})`);
             const result = await response.json();
             if (result.success && result.data?.datasets?.[0]?.data) {
+                console.log("   -> API data successful. Preparing to render chart.");
                 const chartData = result.data;
                 const ctx = modalChartCanvas.getContext('2d');
                 const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
@@ -619,17 +659,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
                 modalChartLoadingEl.classList.add('d-none');
-                modalChartCanvas.classList.remove('d-none');
-                modalChartContainerEl.classList.remove('d-none');
+                console.log("   -> Chart rendered. Showing canvas and container.");
+                modalChartCanvas.classList.remove('d-none'); // Show canvas
+                modalChartContainerEl.classList.remove('d-none'); // Show container
             } else {
+                console.log("   -> API data format invalid or success=false.");
                 throw new Error(result.message || 'Format de données invalide');
             }
         } catch (error) {
-            console.error(`>>> ERREUR dans displayChartInModal pour ${currencyId}:`, error);
-            modalChartLoadingEl.classList.add('d-none');
-            modalChartErrorEl.textContent = `Erreur chargement graphique: ${error.message}`;
-            modalChartErrorEl.classList.remove('d-none');
-            modalChartCanvas.classList.add('d-none');
+             if (error.name === 'AbortError') {
+                 console.log("   -> Chart fetch aborted (likely due to new modal opening). No error shown.");
+             } else {
+                 console.error(`>>> ERREUR fetch/render chart (ID: ${currencyId}):`, error);
+                 modalChartLoadingEl.classList.add('d-none');
+                 modalChartErrorEl.textContent = `Erreur chargement graphique: ${error.message}`;
+                 modalChartErrorEl.classList.remove('d-none');
+                 modalChartCanvas.classList.add('d-none'); // Keep canvas hidden on error
+             }
         }
     }
 
@@ -737,8 +783,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         cryptoChartModalEl.addEventListener('hidden.bs.modal', function () {
-            if (modalChartInstance) {
-            }
+            // NO chart destruction here. It's handled at the start of displayChartInModal.
         });
     }
 
