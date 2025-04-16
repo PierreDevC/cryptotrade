@@ -136,6 +136,12 @@
         .modal-content .action-button {
           border-radius: 40px !important; /* Use !important to override potential conflicts */
         }
+
+        /* NEW: Limit height and enable scrolling for transaction history table */
+        #profile-history-pane .table-responsive {
+          max-height: 400px; /* Adjust this value as needed */
+          overflow-y: auto;
+        }
     </style>
 </head>
 <body>
