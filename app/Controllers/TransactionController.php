@@ -37,10 +37,10 @@ class TransactionController {
 
         $currencyId = filter_var($body['currencyId'] ?? null, FILTER_VALIDATE_INT);
         $quantity = filter_var($body['quantity'] ?? null, FILTER_VALIDATE_FLOAT);
-        $amountCAD = filter_var($body['amountCAD'] ?? null, FILTER_VALIDATE_FLOAT); // Total CAD cost from modal
+        $amountCad = filter_var($body['amountCad'] ?? null, FILTER_VALIDATE_FLOAT); // Total CAD cost from modal
 
          // Basic Validation
-        if (!$currencyId || !$quantity || $quantity <= 0 || !$amountCAD || $amountCAD <= 0) {
+        if (!$currencyId || !$quantity || $quantity <= 0 || !$amountCad || $amountCad <= 0) {
              return $this->jsonResponse(false, 'Invalid input data.');
         }
 
@@ -62,13 +62,13 @@ class TransactionController {
          $estimatedCostCAD = $quantity * $currentPriceCAD;
 
          // Allow maybe 1% difference from the amount confirmed in modal
-         if (abs($estimatedCostCAD - $amountCAD) / $amountCAD > 0.01) {
+         if ($amountCad > 0 && abs($estimatedCostCAD - $amountCad) / $amountCad > 0.01) {
                // return $this->jsonResponse(false, 'Price has changed significantly. Please try again.');
                // For simplicity in this school project, let's proceed with the amountCAD from modal
          }
 
 
-         if ($user['balance_cad'] < $amountCAD) {
+         if ($user['balance_cad'] < $amountCad) {
             return $this->jsonResponse(false, 'Insufficient CAD balance.');
         }
 
@@ -77,7 +77,7 @@ class TransactionController {
             $this->db->beginTransaction();
 
             // 1. Deduct CAD balance
-            $balanceUpdated = $this->userModel->updateBalance($userId, -$amountCAD);
+            $balanceUpdated = $this->userModel->updateBalance($userId, -$amountCad);
             if (!$balanceUpdated) throw new PDOException("Failed to update user balance.");
 
             // 2. Add Crypto to Wallet
@@ -93,7 +93,7 @@ class TransactionController {
                 'quantity' => $quantity,
                 // Log the CAD price at the time of transaction (into the _usd column)
                 'price_per_unit_usd' => $currentPriceCAD,
-                'total_amount_cad' => $amountCAD
+                'total_amount_cad' => $amountCad
             ];
             $logged = $this->transactionModel->create($transactionData);
             if (!$logged) throw new PDOException("Failed to log transaction.");
@@ -116,10 +116,10 @@ class TransactionController {
 
         $currencyId = filter_var($body['currencyId'] ?? null, FILTER_VALIDATE_INT);
         $quantity = filter_var($body['quantity'] ?? null, FILTER_VALIDATE_FLOAT);
-        $amountCAD = filter_var($body['amountCAD'] ?? null, FILTER_VALIDATE_FLOAT); // Total CAD proceeds from modal
+        $amountCad = filter_var($body['amountCad'] ?? null, FILTER_VALIDATE_FLOAT); // Total CAD proceeds from modal
 
         // Basic Validation
-        if (!$currencyId || !$quantity || $quantity <= 0 || !$amountCAD || $amountCAD <= 0) {
+        if (!$currencyId || !$quantity || $quantity <= 0 || !$amountCad || $amountCad <= 0) {
             return $this->jsonResponse(false, 'Invalid input data.');
         }
 
@@ -140,7 +140,7 @@ class TransactionController {
          $estimatedProceedsCAD = $quantity * $currentPriceCAD;
 
          // Allow maybe 1% difference
-          if (abs($estimatedProceedsCAD - $amountCAD) / $amountCAD > 0.01) {
+          if ($amountCad > 0 && abs($estimatedProceedsCAD - $amountCad) / $amountCad > 0.01) {
              // return $this->jsonResponse(false, 'Price has changed significantly. Please try again.');
              // Proceed with amountCAD from modal for simplicity
           }
@@ -154,7 +154,7 @@ class TransactionController {
              if (!$walletUpdated) throw new PDOException("Failed to update wallet quantity.");
 
              // 2. Add CAD balance
-             $balanceUpdated = $this->userModel->updateBalance($userId, $amountCAD);
+             $balanceUpdated = $this->userModel->updateBalance($userId, $amountCad);
              if (!$balanceUpdated) throw new PDOException("Failed to update user balance.");
 
 
@@ -165,7 +165,7 @@ class TransactionController {
                  'type' => 'sell',
                  'quantity' => $quantity,
                  'price_per_unit_usd' => $currentPriceCAD, // Log CAD price at time of sale (into _usd column)
-                 'total_amount_cad' => $amountCAD
+                 'total_amount_cad' => $amountCad
              ];
              $logged = $this->transactionModel->create($transactionData);
              if (!$logged) throw new PDOException("Failed to log transaction.");

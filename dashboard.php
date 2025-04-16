@@ -337,7 +337,7 @@
                     <div class="col-12 grid-item" style="overflow-y: auto;" id="crypto-list-card">
                         <h5>Cryptomonnaies</h5>
                          <div class="table-responsive"><table class="table crypto-table"><thead><tr>
-                                        <th scope="col" style="width: 50px;"></th><th scope="col">#</th><th scope="col">Crypto</th><th scope="col">Price (CAD)</th>
+                                        <th scope="col" style="width: 50px;">Icône</th><th scope="col">#</th><th scope="col">Crypto</th><th scope="col">Price (CAD)</th>
                                         <th scope="col">24h Change</th><th scope="col">Market Cap</th><th scope="col">Graphique</th>
                                         <th scope="col">Action</th>
                         </tr></thead><tbody id="cryptoListTableBody"><tr class="loading-placeholder"><td colspan="8">Chargement des cryptomonnaies... <i class="fas fa-spinner fa-spin"></i></td></tr></tbody></table></div>
@@ -377,23 +377,66 @@
 
     <!-- Crypto Chart Modal -->
     <div class="modal fade" id="cryptoChartModal" tabindex="-1" aria-labelledby="cryptoChartModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="cryptoChartModalLabel">Graphique : Chargement...</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <div class="text-center" id="modalChartLoading">
-                <i class="fas fa-spinner fa-spin fa-2x"></i>
-                <p>Chargement du graphique...</p>
+            <!-- Start 2-column layout -->
+            <div class="row gx-4">
+                <!-- Left Column: Chart -->
+                <div class="col-lg-7">
+                    <div class="text-center mb-2" id="modalChartLoading">
+                        <i class="fas fa-spinner fa-spin fa-2x"></i>
+                        <p>Chargement du graphique...</p>
+                    </div>
+                    <div style="height: 350px;" id="modalChartContainer" class="d-none">
+                        <canvas id="modalCryptoChartCanvas"></canvas>
+                    </div>
+                    <div id="modalChartError" class="alert alert-danger d-none mt-2">
+                        Impossible de charger le graphique.
+                    </div>
+                </div>
+
+                <!-- Right Column: Info & Trading -->
+                <div class="col-lg-5 border-start ps-4">
+                    <h5 class="mb-3">Informations Actuelles</h5>
+                    <dl class="row mb-4">
+                      <dt class="col-sm-5">Prix (CAD)</dt>
+                      <dd class="col-sm-7" id="modalInfoPrice">Chargement...</dd>
+                      <dt class="col-sm-5">Variation 24h</dt>
+                      <dd class="col-sm-7" id="modalInfoChange">Chargement...</dd>
+                      <dt class="col-sm-5">Market Cap</dt>
+                      <dd class="col-sm-7" id="modalInfoMarketCap">Chargement...</dd>
+                    </dl>
+
+                    <h5 class="mb-3">Effectuer une Transaction</h5>
+                    <div class="mb-3">
+                        <label for="modalCryptoAmount" class="form-label">Montant (CAD)</label>
+                        <div class="input-group">
+                          <span class="input-group-text">$</span>
+                          <input type="number" class="form-control" id="modalCryptoAmount" placeholder="0.00" step="0.01">
+                          <span class="input-group-text">CAD</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modalCryptoQuantity" class="form-label">Quantité</label>
+                        <input type="number" class="form-control" id="modalCryptoQuantity" placeholder="0.00000000" step="any">
+                    </div>
+                    <div class="d-flex justify-content-start gap-2 mt-3 mb-3">
+                        <button id="modalBuyButton" class="action-button text-decoration-none" disabled><i class="fa-solid fa-arrow-right-to-bracket me-1"></i>Acheter</button>
+                        <button id="modalSellButton" class="btn btn-danger-dark" disabled><i class="fa-solid fa-arrow-right-from-bracket me-1"></i>Vendre</button>
+                        <button id="modalSellAllButton" class="btn btn-danger-dark" disabled title="Vendre la quantité maximale détenue"><i class="fa-solid fa-sack-dollar me-1"></i>Vendre Tout</button>
+                    </div>
+                    <div class="alert alert-info mt-3 d-none" id="modalTradeInfo"><i class="fa-solid fa-info-circle me-2"></i><span id="modalTradeInfoText"></span></div>
+                </div>
             </div>
-            <div style="height: 400px;" id="modalChartContainer" class="d-none">
-                 <canvas id="modalCryptoChartCanvas"></canvas>
-            </div>
-            <div id="modalChartError" class="alert alert-danger d-none">
-                Impossible de charger le graphique.
-            </div>
+            <!-- End 2-column layout -->
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
           </div>
         </div>
       </div>
