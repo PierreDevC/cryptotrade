@@ -87,6 +87,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const saveProfileButton = document.getElementById('saveProfileButton');
     const userProfileMessageArea = document.getElementById('userProfileMessage');
 
+    // --- NEW: Statistics Tab Selectors ---
+    const statsUnrealizedPLEl = document.getElementById('statsUnrealizedPL');
+    const profileStatsTabBtn = document.getElementById('profile-stats-tab');
+    const statsTotalCryptoValueEl = document.getElementById('statsTotalCryptoValue');
+    const statsFiatBalanceEl = document.getElementById('statsFiatBalance');
+    const allocationChartCanvas = document.getElementById('allocationChartCanvas');
+    const statsAllocationLoadingEl = document.getElementById('statsAllocationLoading');
+    const statsAllocationErrorEl = document.getElementById('statsAllocationError');
+    const statsAllocationEmptyEl = document.getElementById('statsAllocationEmpty');
+    const downloadAllocationChartBtn = document.getElementById('downloadAllocationChartBtn');
+
     // --- Transaction History Selectors (NEW) ---
     const transactionHistoryTableBody = document.getElementById('transactionHistoryTableBody');
     const downloadCsvBtn = document.getElementById('downloadCsvBtn');
@@ -121,6 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let portfolioChart = null;
     let cryptoListChartInstances = {};
     let modalChartInstance = null;
+    let allocationChart = null; // NEW: Chart instance for allocation
 
     // --- Store context for the confirmation modal ---
     let currentChartFetchController = null;
@@ -662,6 +674,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log("   -> Chart rendered. Showing canvas and container.");
                 modalChartCanvas.classList.remove('d-none'); // Show canvas
                 modalChartContainerEl.classList.remove('d-none'); // Show container
+                if(downloadAllocationChartBtn) downloadAllocationChartBtn.disabled = false;
             } else {
                 console.log("   -> API data format invalid or success=false.");
                 throw new Error(result.message || 'Format de données invalide');
@@ -675,9 +688,149 @@ document.addEventListener('DOMContentLoaded', function() {
                  modalChartErrorEl.textContent = `Erreur chargement graphique: ${error.message}`;
                  modalChartErrorEl.classList.remove('d-none');
                  modalChartCanvas.classList.add('d-none'); // Keep canvas hidden on error
+                 if(downloadAllocationChartBtn) downloadAllocationChartBtn.disabled = true;
              }
         }
     }
+
+    // --- NEW: Statistics Tab Functions ---
+    async function fetchAndRenderStats() {
+        console.log(">>> fetchAndRenderStats triggered");
+        if (!allocationChartCanvas || !statsAllocationLoadingEl || !statsAllocationErrorEl || !statsTotalCryptoValueEl || !statsFiatBalanceEl || !statsAllocationEmptyEl || !statsUnrealizedPLEl || !downloadAllocationChartBtn) {
+            console.error("Stats tab elements not found.");
+            return;
+        }
+
+        // Reset state
+        statsAllocationLoadingEl.classList.remove('d-none');
+        statsAllocationErrorEl.classList.add('d-none');
+        if(downloadAllocationChartBtn) downloadAllocationChartBtn.disabled = true;
+        statsAllocationEmptyEl.classList.add('d-none');
+        allocationChartCanvas.style.display = 'none'; // Hide canvas initially
+        if (allocationChart) {
+            allocationChart.destroy();
+            allocationChart = null;
+        }
+        if (statsTotalCryptoValueEl) statsTotalCryptoValueEl.textContent = 'Chargement...';
+        if (statsFiatBalanceEl) statsFiatBalanceEl.textContent = 'Chargement...';
+        if (statsUnrealizedPLEl) statsUnrealizedPLEl.textContent = 'Chargement...';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/stats/allocation`);
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                const statsData = result.data;
+
+                // Update summary cards
+                if (statsTotalCryptoValueEl) statsTotalCryptoValueEl.textContent = formatCurrency(statsData.total_crypto_value_cad);
+                if (statsFiatBalanceEl) statsFiatBalanceEl.textContent = formatCurrency(statsData.user_balance_cad);
+                if (statsUnrealizedPLEl) {
+                    const plValue = statsData.total_unrealized_pl_cad;
+                    statsUnrealizedPLEl.textContent = formatCurrency(plValue);
+                    statsUnrealizedPLEl.classList.remove('text-success', 'text-danger', 'text-muted');
+                    if (plValue > 0) {
+                        statsUnrealizedPLEl.classList.add('text-success');
+                    } else if (plValue < 0) {
+                        statsUnrealizedPLEl.classList.add('text-danger');
+                    } else {
+                        statsUnrealizedPLEl.classList.add('text-muted');
+                    }
+                }
+
+                // Prepare chart data
+                const allocation = statsData.allocation || [];
+                if (allocation.length === 0) {
+                    statsAllocationEmptyEl.classList.remove('d-none');
+                    statsAllocationLoadingEl.classList.add('d-none');
+                    if(downloadAllocationChartBtn) downloadAllocationChartBtn.disabled = true;
+                    return; // No data to chart
+                }
+
+                const labels = allocation.map(item => item.symbol);
+                const dataValues = allocation.map(item => item.percentage);
+
+                const chartConfigData = {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Répartition (%)',
+                        data: dataValues,
+                        // Add nice background colors (can be generated dynamically later)
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.7)',
+                            'rgba(54, 162, 235, 0.7)',
+                            'rgba(255, 206, 86, 0.7)',
+                            'rgba(75, 192, 192, 0.7)',
+                            'rgba(153, 102, 255, 0.7)',
+                            'rgba(255, 159, 64, 0.7)',
+                            'rgba(99, 255, 132, 0.7)', // More colors if needed
+                            'rgba(235, 54, 162, 0.7)',
+                            'rgba(86, 255, 206, 0.7)',
+                            'rgba(192, 75, 192, 0.7)'
+                        ],
+                        borderColor: htmlElement.getAttribute('data-bs-theme') === 'dark' ? '#333' : '#fff', // Border color based on theme
+                        borderWidth: 1
+                    }]
+                };
+
+                const ctx = allocationChartCanvas.getContext('2d');
+                allocationChart = new Chart(ctx, {
+                    type: 'doughnut', // Or 'pie'
+                    data: chartConfigData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                     color: htmlElement.getAttribute('data-bs-theme') === 'dark' ? '#fff' : '#666' // Legend color based on theme
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed !== null) {
+                                            // Find the original allocation item to show name and CAD value
+                                            const symbol = context.label;
+                                            const item = allocation.find(a => a.symbol === symbol);
+                                            label += `${context.parsed.toFixed(2)}%`;
+                                            if (item) {
+                                                label += ` (${item.name}: ${formatCurrency(item.value_cad)}, P/L: ${formatCurrency(item.unrealized_pl_cad)})`;
+                                            }
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                allocationChartCanvas.style.display = 'block'; // Show canvas
+                if(downloadAllocationChartBtn) downloadAllocationChartBtn.disabled = false;
+
+            } else {
+                throw new Error(result.message || 'Failed to process stats data');
+            }
+
+        } catch (error) {
+            console.error("Error fetching/rendering stats:", error);
+            if(downloadAllocationChartBtn) downloadAllocationChartBtn.disabled = true;
+            statsAllocationErrorEl.classList.remove('d-none');
+        } finally {
+            statsAllocationLoadingEl.classList.add('d-none');
+        }
+    }
+
+    // --- End NEW Statistics Tab Functions ---
 
     // --- Main Fetch Function ---
     async function fetchDashboardData() {
@@ -1203,6 +1356,30 @@ document.addEventListener('DOMContentLoaded', function() {
             const userTabInstance = bootstrap.Tab.getInstance(profileUserTabBtn) || new bootstrap.Tab(profileUserTabBtn);
             if (userTabInstance) {
                 userTabInstance.show();
+            }
+        });
+    }
+
+    // --- NEW: Listener for Stats Tab Activation ---
+    if (profileStatsTabBtn) {
+        profileStatsTabBtn.addEventListener('shown.bs.tab', function (event) {
+            fetchAndRenderStats(); // Fetch and render stats when the tab is shown
+        });
+    }
+
+    // --- NEW: Listener for Allocation Chart Download Button ---
+    if (downloadAllocationChartBtn) {
+        downloadAllocationChartBtn.addEventListener('click', () => {
+            if (allocationChart) {
+                const url = allocationChart.toBase64Image();
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'cryptotrade-repartition-actifs.png';
+                document.body.appendChild(link); // Required for Firefox
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                console.error("Allocation chart instance not found for download.");
             }
         });
     }

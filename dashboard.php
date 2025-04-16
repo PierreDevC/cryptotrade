@@ -457,6 +457,7 @@
               <div class="nav nav-tabs mb-3" id="profileTab" role="tablist">
                 <button class="nav-link active" id="profile-user-tab" data-bs-toggle="tab" data-bs-target="#profile-user-pane" type="button" role="tab" aria-controls="profile-user-pane" aria-selected="true">Mes Informations</button>
                 <!-- Admin tab link (initially hidden) -->
+                <button class="nav-link" id="profile-stats-tab" data-bs-toggle="tab" data-bs-target="#profile-stats-pane" type="button" role="tab" aria-controls="profile-stats-pane" aria-selected="false">Rapports et Statistiques</button>
                 <button class="nav-link d-none" id="profile-admin-tab" data-bs-toggle="tab" data-bs-target="#profile-admin-pane" type="button" role="tab" aria-controls="profile-admin-pane" aria-selected="false">Gestion Cryptos (Admin)</button>
                 <!-- Transaction History tab link -->
                 <button class="nav-link" id="profile-history-tab" data-bs-toggle="tab" data-bs-target="#profile-history-pane" type="button" role="tab" aria-controls="profile-history-pane" aria-selected="false">Historique</button>
@@ -503,6 +504,67 @@
                          <button type="submit" class="action-button text-decoration-none" id="saveProfileButton"><i class="fas fa-save me-1"></i> Sauvegarder Profil</button>
                     </div>
                 </form>
+              </div>
+
+              <!-- Statistics Tab Pane -->
+              <div class="tab-pane fade" id="profile-stats-pane" role="tabpanel" aria-labelledby="profile-stats-tab" tabindex="0">
+                <h5 class="mb-3"><i class="fas fa-chart-pie me-2"></i>Rapports et Statistiques Financières</h5>
+                <div class="row g-3 mb-4">
+                    <!-- Summary Cards -->
+                    <div class="col-md-6">
+                        <div class="card text-center h-100 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Valeur Totale Crypto</h6>
+                                <p class="card-text fs-4 fw-bold" id="statsTotalCryptoValue">Chargement...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card text-center h-100 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Solde Fiat (CAD)</h6>
+                                <p class="card-text fs-4 fw-bold" id="statsFiatBalance">Chargement...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12"> <!-- Span full width for this one -->
+                        <div class="card text-center h-100 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Profit / Perte Non Réalisé Total (Crypto)</h6>
+                                <p class="card-text fs-4 fw-bold" id="statsUnrealizedPL">Chargement...</p>
+                                <small class="text-muted">(Valeur Actuelle Crypto - Coût d'Acquisition Total)</small>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Add more cards here for P/L later -->
+                </div>
+
+                <hr>
+
+                <h6 class="mt-4 mb-3 text-center">Répartition des Actifs Crypto (par Valeur)</h6>
+                <div style="max-width: 400px; margin: auto; position: relative;">
+                    <div id="statsAllocationLoading" class="text-center py-5 d-none">
+                        <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                        <p class="text-muted mt-2">Chargement du graphique...</p>
+                    </div>
+                    <div id="statsAllocationError" class="alert alert-warning d-none text-center">
+                        Impossible de charger le graphique de répartition.
+                    </div>
+                    <div id="statsAllocationEmpty" class="alert alert-secondary d-none text-center">
+                        Vous n'avez aucun actif crypto à afficher.
+                    </div>
+                    <canvas id="allocationChartCanvas"></canvas>
+                </div>
+                <div class="text-center mt-3">
+                    <button id="downloadAllocationChartBtn" class="btn btn-sm btn-outline-secondary" disabled>
+                        <i class="fas fa-download me-1"></i> Télécharger Graphique (PNG)
+                    </button>
+                </div>
+
+                <!-- Placeholder for future realized P/L details -->
+                <div class="mt-4 text-center text-muted small">
+                     Le calcul du Profit/Perte Réalisé (basé sur les ventes passées) sera ajouté ultérieurement.
+                </div>
               </div>
 
               <!-- Admin Currency Management Tab Pane (content moved here, still controlled by d-none on inner div) -->

@@ -76,6 +76,9 @@ $router->get('/api/crypto/chart/{id}', 'App\Controllers\MarketController@getCryp
 $router->post('/api/transaction/buy', 'App\Controllers\TransactionController@buy');
 $router->post('/api/transaction/sell', 'App\Controllers\TransactionController@sell');
 
+// --- API Route for Stats Tab (Allocation) ---
+$router->get('/api/stats/allocation', 'App\Controllers\DashboardController@getAllocationData');
+
 // --- API Route for User Profile Update (Protected) ---
 $router->post('/api/user/update', 'App\Controllers\UserController@updateProfile');
 

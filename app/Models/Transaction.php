@@ -63,5 +63,68 @@ class Transaction {
          // Returning empty for now as it's non-trivial.
         return ['labels' => [], 'values' => []];
     }
+
+    /**
+     * Calculates the FIFO cost basis for the currently held quantity of a specific currency.
+     *
+     * @param int $userId The user's ID.
+     * @param int $currencyId The currency's ID.
+     * @return float The total cost basis in CAD for the currently held assets.
+     */
+    public function calculateCurrentFIFOBaseCost(int $userId, int $currencyId): float {
+        // 1. Fetch all BUY transactions for this user/currency, ordered oldest first
+        $buySql = "SELECT quantity, total_amount_cad FROM transactions
+                   WHERE user_id = :user_id AND currency_id = :currency_id AND type = 'buy'
+                   ORDER BY timestamp ASC";
+        $buyStmt = $this->db->prepare($buySql);
+        $buyStmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        $buyStmt->bindParam(':currency_id', $currencyId, PDO::PARAM_INT);
+        $buyStmt->execute();
+        $buyTransactions = $buyStmt->fetchAll();
+
+        // 2. Fetch all SELL transactions for this user/currency, ordered oldest first
+        $sellSql = "SELECT quantity FROM transactions
+                    WHERE user_id = :user_id AND currency_id = :currency_id AND type = 'sell'
+                    ORDER BY timestamp ASC";
+        $sellStmt = $this->db->prepare($sellSql);
+        $sellStmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        $sellStmt->bindParam(':currency_id', $currencyId, PDO::PARAM_INT);
+        $sellStmt->execute();
+        $sellTransactions = $sellStmt->fetchAll();
+
+        $remainingBuys = [];
+        foreach ($buyTransactions as $buy) {
+            // Store remaining quantity and cost per unit for each buy lot
+            $remainingBuys[] = [
+                'remaining_quantity' => (float)$buy['quantity'],
+                'cost_per_unit' => (float)$buy['quantity'] > 0 ? (float)$buy['total_amount_cad'] / (float)$buy['quantity'] : 0
+            ];
+        }
+
+        // 3. Simulate sells using FIFO
+        foreach ($sellTransactions as $sell) {
+            $sellQuantity = (float)$sell['quantity'];
+            foreach ($remainingBuys as $key => &$buyLot) { // Use reference to modify array
+                if ($sellQuantity <= 0) break; // This sell is fully accounted for
+
+                if ($buyLot['remaining_quantity'] > 0) {
+                    $deductAmount = min($sellQuantity, $buyLot['remaining_quantity']);
+                    $buyLot['remaining_quantity'] -= $deductAmount;
+                    $sellQuantity -= $deductAmount;
+                }
+            }
+            unset($buyLot); // Unset reference after loop
+        }
+
+        // 4. Calculate cost basis from remaining buy lots
+        $totalCostBasis = 0.0;
+        foreach ($remainingBuys as $buyLot) {
+            if ($buyLot['remaining_quantity'] > 0) {
+                $totalCostBasis += $buyLot['remaining_quantity'] * $buyLot['cost_per_unit'];
+            }
+        }
+
+        return $totalCostBasis;
+    }
 }
 ?>

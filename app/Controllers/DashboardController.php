@@ -157,6 +157,67 @@ class DashboardController {
         exit;
     }
 
+    // API Endpoint: Get data for the Allocation Stats Tab
+    public function getAllocationData() {
+        // Instantiate Transaction model here if not already done in constructor
+        // (Assuming $this->transactionModel is available via constructor)
+        if (!$this->transactionModel) { 
+             $this->transactionModel = new Transaction($this->db);
+        }
+
+        AuthGuard::protect(); // Ensure user is logged in
+        $userId = AuthGuard::user();
+
+        $user = $this->userModel->findById($userId);
+        $holdingsRaw = $this->walletModel->findByUserWithDetails($userId);
+
+        $allocationData = [];
+        $totalCryptoValueCAD = 0;
+        $totalCostBasisCAD = 0; // NEW: Track total cost basis
+
+        // Calculate total value first
+        foreach ($holdingsRaw as $holding) {
+            $currentPriceCAD = (float)$holding['current_price_usd']; // Treat DB price as CAD
+            $currentValueCAD = $holding['quantity'] * $currentPriceCAD;
+            $totalCryptoValueCAD += $currentValueCAD;
+        }
+
+        // Calculate percentage for each holding
+        foreach ($holdingsRaw as $holding) {
+            $currentPriceCAD = (float)$holding['current_price_usd'];
+            $currentValueCAD = $holding['quantity'] * $currentPriceCAD;
+            $percentage = ($totalCryptoValueCAD > 0) ? ($currentValueCAD / $totalCryptoValueCAD) * 100 : 0;
+
+            // Calculate Cost Basis and Unrealized P/L for this holding
+            $costBasisCAD = $this->transactionModel->calculateCurrentFIFOBaseCost($userId, (int)$holding['currency_id']);
+            $unrealizedPlCAD = $currentValueCAD - $costBasisCAD;
+            $totalCostBasisCAD += $costBasisCAD; // Add to total cost basis
+
+            $allocationData[] = [
+                'symbol' => $holding['symbol'],
+                'name' => $holding['name'], // Include name for potential tooltips
+                'value_cad' => $currentValueCAD,
+                'percentage' => round($percentage, 2),
+                'cost_basis_cad' => round($costBasisCAD, 2), // Add cost basis
+                'unrealized_pl_cad' => round($unrealizedPlCAD, 2) // Add unrealized P/L
+            ];
+        }
+
+        // Calculate total unrealized P/L
+        $totalUnrealizedPlCAD = $totalCryptoValueCAD - $totalCostBasisCAD;
+
+        $data = [
+            'allocation' => $allocationData,
+            'total_crypto_value_cad' => round($totalCryptoValueCAD, 2),
+            'user_balance_cad' => round($user['balance_cad'], 2),
+            'total_unrealized_pl_cad' => round($totalUnrealizedPlCAD, 2) // Add total unrealized P/L
+        ];
+
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'data' => $data]);
+        exit;
+    }
+
      // Helper to get image URL (like in index.html table)
      private function getCryptoImageUrl($symbol) {
         $map = [
