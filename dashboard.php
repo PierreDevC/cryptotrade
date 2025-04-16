@@ -308,6 +308,9 @@
                             <button id="accountSettingsBtn" class="action-button text-decoration-none" data-bs-toggle="modal" data-bs-target="#profileSettingsModal" style="padding: 8px 12px; font-size: 0.9rem;">
                                 <i class="fa-solid fa-gear me-1"></i> Paramètres du Compte
                             </button>
+                            <button id="viewStatsBtn" class="action-button text-decoration-none" data-bs-toggle="modal" data-bs-target="#profileSettingsModal" style="padding: 8px 12px; font-size: 0.9rem;">
+                                <i class="fas fa-chart-pie me-1"></i> Rapports et Statistiques
+                            </button>
                         </div>
                 </div></div>
                 <div class="row g-4" id="holdings-section"> <div class="col-12 grid-item" id="holdings-card">

@@ -115,6 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const viewTransactionsBtn = document.getElementById('viewTransactionsBtn');
     const accountSettingsBtn = document.getElementById('accountSettingsBtn');
     const profileUserTabBtn = document.getElementById('profile-user-tab');
+    const viewStatsBtn = document.getElementById('viewStatsBtn');
 
     // --- NEW: Dark Mode Selectors ---
     const darkModeSwitch = document.getElementById('darkModeSwitch');
@@ -1380,6 +1381,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.body.removeChild(link);
             } else {
                 console.error("Allocation chart instance not found for download.");
+            }
+        });
+    }
+
+    if (viewStatsBtn && profileSettingsModalEl && profileStatsTabBtn) {
+        viewStatsBtn.addEventListener('click', function() {
+            // Modal toggle is handled by data attributes, we just need to switch tab
+            const statsTabInstance = bootstrap.Tab.getInstance(profileStatsTabBtn) || new bootstrap.Tab(profileStatsTabBtn);
+            if (statsTabInstance) {
+                statsTabInstance.show();
             }
         });
     }
