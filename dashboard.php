@@ -142,6 +142,101 @@
           max-height: 400px; /* Adjust this value as needed */
           overflow-y: auto;
         }
+
+        /* --- Dark Mode Adjustments --- */
+        [data-bs-theme="dark"] {
+          /* Adjust grid item background and text */
+          .grid-item {
+            background-color: var(--bs-dark-bg-subtle, #1a1d20); /* Slightly lighter than body */
+            color: var(--bs-secondary-color); /* Lighter text */
+            border: 1px solid var(--bs-border-color-translucent);
+          }
+
+          /* Adjust grid item headings */
+          .grid-item h5 {
+            color: var(--bs-light-color); /* Lighter heading color */
+          }
+          .grid-item h5:after {
+             background-color: var(--bs-primary); /* Keep primary color for accent */
+          }
+
+          /* Adjust table header colors */
+          .crypto-table thead th {
+             background-color: var(--bs-tertiary-bg); /* Darker header background */
+             color: var(--bs-emphasis-color); /* Clearer header text */
+             border-color: var(--bs-border-color-translucent);
+          }
+
+          /* Adjust main balance/investment text color */
+          #balanceAmount,
+          #investmentAmount {
+              /* Ensure balance/investment text is bright */
+              color: var(--bs-light-text-emphasis, #f8f9fa) !important;
+          }
+
+          /* Adjust custom button styles for dark mode */
+          .action-button {
+             /* Keep the green, but ensure text contrast */
+             color: #fff; /* White text */
+          }
+          .btn-danger-dark {
+             /* Keep the dark red, ensure text contrast */
+             color: #fff;
+          }
+
+           /* Adjust Navbar Brand */
+          .navbar .navbar-brand.brand-logo {
+             color: var(--bs-emphasis-color); /* Make brand slightly more prominent */
+          }
+
+          /* Adjust Navbar Links */
+          .navbar .nav-link {
+              color: var(--bs-secondary-color); /* Make nav links clearer */
+          }
+          .navbar .nav-link.active {
+               color: var(--bs-light-text-emphasis); /* Make active link brighter */
+          }
+
+          /* Adjust Navbar Background */
+          .sticky-top.navbar {
+              background-color: var(--bs-body-bg) !important; /* Use body background for dark navbar */
+              /* You might need to adjust border color too if it exists */
+              border-bottom-color: var(--bs-border-color-translucent) !important;
+          }
+
+          /* --- Modal Adjustments --- */
+          .modal-content {
+              background-color: var(--bs-dark-bg-subtle, #1a1d20);
+              color: var(--bs-secondary-color);
+              border-color: var(--bs-border-color-translucent);
+          }
+          .modal-header,
+          .modal-footer {
+              border-color: var(--bs-border-color-translucent);
+          }
+          .modal-header .btn-close {
+              filter: invert(1) grayscale(100%) brightness(200%); /* Make close button visible */
+          }
+          .modal-content .nav-tabs .nav-link {
+             color: var(--bs-secondary-color);
+             border-color: var(--bs-border-color-translucent);
+          }
+          .modal-content .nav-tabs .nav-link.active {
+             color: var(--bs-light-text-emphasis);
+             background-color: var(--bs-dark-bg-subtle);
+             border-color: var(--bs-primary);
+             border-bottom-color: transparent; /* Match Bootstrap */
+          }
+          .modal-content .table thead th {
+              background-color: var(--bs-tertiary-bg);
+              color: var(--bs-emphasis-color);
+              border-color: var(--bs-border-color-translucent);
+          }
+          .modal-content .form-label {
+             color: var(--bs-light-text-emphasis);
+          }
+        }
+        /* --- End Dark Mode Adjustments --- */
     </style>
 </head>
 <body>
@@ -161,6 +256,13 @@
                     <li class="nav-item"><a class="nav-link active" aria-current="page" href="#holdings-card" id="nav-link-holdings">Mes actifs</a></li>
                     <li class="nav-item"><a class="nav-link active" aria-current="page" href="#" id="nav-link-transactions" data-bs-toggle="modal" data-bs-target="#profileSettingsModal">Transactions</a></li>
                 </ul>
+
+                <!-- Dark Mode Toggle Switch -->
+                <div class="form-check form-switch me-3 d-flex align-items-center">
+                    <input class="form-check-input" type="checkbox" role="switch" id="darkModeSwitch" style="cursor: pointer;">
+                    <label class="form-check-label ms-2" for="darkModeSwitch"><i id="darkModeIcon" class="fa-solid fa-sun"></i></label>
+                </div>
+
                 <div class="d-flex gap-2"> <div class="nav-item dropdown">
                         <button class="btn btn-outline-secondary dropdown-toggle font-weight-bold" type="button" id="navbarDropdown" data-bs-toggle="dropdown" aria-expanded="false">Compte <i class="fa-solid fa-user"></i></button>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">

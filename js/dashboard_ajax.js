@@ -91,6 +91,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const accountSettingsBtn = document.getElementById('accountSettingsBtn');
     const profileUserTabBtn = document.getElementById('profile-user-tab'); // Selector for the user info tab button
 
+    // --- NEW: Dark Mode Selectors ---
+    const darkModeSwitch = document.getElementById('darkModeSwitch');
+    const darkModeIcon = document.getElementById('darkModeIcon');
+    const htmlElement = document.documentElement; // The <html> tag
+
     let balanceVisible = true;
     let userBalanceRaw = 0;
     let selectedCryptoForTrade = null;
@@ -102,6 +107,43 @@ document.addEventListener('DOMContentLoaded', function() {
     let portfolioChart = null;
     let cryptoListChartInstances = {};
     let modalChartInstance = null;
+
+    // --- NEW: Dark Mode Logic ---
+    const THEME_KEY = 'themePreference';
+
+    // Function to apply theme based on preference
+    function applyTheme(theme, redrawCharts = false) { // Add parameter to control redraw
+        if (theme === 'dark') {
+            htmlElement.setAttribute('data-bs-theme', 'dark');
+            if (darkModeSwitch) darkModeSwitch.checked = true;
+            if (darkModeIcon) darkModeIcon.className = 'fa-solid fa-moon';
+        } else {
+            htmlElement.removeAttribute('data-bs-theme');
+            if (darkModeSwitch) darkModeSwitch.checked = false;
+            if (darkModeIcon) darkModeIcon.className = 'fa-solid fa-sun';
+        }
+        // Re-render charts if requested (e.g., after toggle)
+        if (redrawCharts) {
+            fetchDashboardData(); // Re-fetch data which will re-render charts with new theme colors
+        }
+    }
+
+    // Function to toggle theme
+    function toggleTheme() {
+        const currentTheme = htmlElement.getAttribute('data-bs-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        localStorage.setItem(THEME_KEY, newTheme);
+        applyTheme(newTheme, true); // Pass true to force chart redraw
+    }
+
+    // Initialize theme on load
+    const savedTheme = localStorage.getItem(THEME_KEY) || 'light'; // Default to light
+    applyTheme(savedTheme);
+
+    // Listener for the dark mode switch
+    if (darkModeSwitch) {
+        darkModeSwitch.addEventListener('change', toggleTheme);
+    }
 
     // --- Helper Functions ---
     function formatCurrency(value, currency = 'CAD') {
@@ -240,10 +282,32 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderPortfolioChart(chartData) {
         const ctx = document.getElementById('cryptoChart')?.getContext('2d');
         if (!ctx || !chartData || !chartData.labels || !chartData.values) return;
+
+        // Destroy existing chart instance if it exists
         if (portfolioChart) portfolioChart.destroy();
+
+        // Define colors based on theme INSIDE the function
+        const isDarkMode = htmlElement.getAttribute('data-bs-theme') === 'dark';
+        const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+        const labelColor = isDarkMode ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.7)'; // Use brighter white for dark mode labels
+        const lineColor = isDarkMode ? '#6ea8fe' : '#2d3a36'; // Example: Use a lighter blue for dark mode line
+        const lineBackgroundColor = isDarkMode ? 'rgba(110, 168, 254, 0.2)' : 'rgba(45, 58, 54, 0.1)';
+
         portfolioChart = new Chart(ctx, {
-            type: 'line', data: { labels: chartData.labels, datasets: [{ label: 'Valeur Totale du Portefeuille (CAD)', data: chartData.values, borderColor: '#2d3a36', backgroundColor: 'rgba(45, 58, 54, 0.1)', tension: 0.3, fill: true, pointRadius: 0, pointHoverRadius: 0 }] },
-            options: { responsive: true, maintainAspectRatio: false, scales: { x: { display: false }, y: { beginAtZero: false, ticks: { callback: value => formatCurrency(value) } } }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: context => context.parsed.y !== null ? formatCurrency(context.parsed.y) : '' } } } }
+            type: 'line',
+            data: { labels: chartData.labels, datasets: [{ label: 'Valeur Totale du Portefeuille (CAD)', data: chartData.values, borderColor: lineColor, backgroundColor: lineBackgroundColor, tension: 0.3, fill: true, pointRadius: 0, pointHoverRadius: 0 }] },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                    x: { display: false, grid: { color: gridColor } },
+                    y: {
+                        beginAtZero: false,
+                        ticks: { callback: value => formatCurrency(value), color: labelColor },
+                        grid: { color: gridColor }
+                    }
+                },
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: context => context.parsed.y !== null ? formatCurrency(context.parsed.y) : '' } } }
+            }
         });
     }
 
@@ -311,6 +375,8 @@ document.addEventListener('DOMContentLoaded', function() {
     async function fetchMiniChartData(currencyId, canvasId, changeClass) {
          if (!currencyId || !canvasId) return;
          try {
+             const isDarkMode = htmlElement.getAttribute('data-bs-theme') === 'dark'; // Check theme
+ 
              const response = await fetch(`${API_BASE_URL}/crypto/chart/${currencyId}`);
              if (!response.ok) throw new Error(`Mini chart HTTP error! Status: ${response.status}`);
              const result = await response.json();
@@ -318,8 +384,13 @@ document.addEventListener('DOMContentLoaded', function() {
                  const ctx = document.getElementById(canvasId)?.getContext('2d');
                  if (!ctx) return;
                  const chartColor = changeClass === 'text-success' ? 'rgba(25, 135, 84, 0.7)' : (changeClass === 'text-danger' ? 'rgba(220, 53, 69, 0.7)' : 'rgba(108, 117, 125, 0.7)');
+
+                 // Adjust mini chart line color slightly for dark mode if needed (optional)
+                 // const finalChartColor = isDarkMode ? adjustColorForDarkMode(chartColor) : chartColor;
+                 const finalChartColor = chartColor; // Use original color for now
+
                  cryptoListChartInstances[canvasId] = new Chart(ctx, {
-                     type: 'line', data: { labels: result.data.labels, datasets: [{ data: result.data.datasets[0].data, borderColor: chartColor, borderWidth: 1.5, pointRadius: 0, tension: 0.4 }] },
+                     type: 'line', data: { labels: result.data.labels, datasets: [{ data: result.data.datasets[0].data, borderColor: finalChartColor, borderWidth: 1.5, pointRadius: 0, tension: 0.4 }] },
                      options: { responsive: true, maintainAspectRatio: false, scales: { x: { display: false }, y: { display: false } }, plugins: { legend: { display: false }, tooltip: { enabled: false } }, animation: false }
                  });
              }
@@ -414,9 +485,38 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.success && result.data?.datasets?.[0]?.data) {
                 const chartData = result.data;
                 const ctx = modalChartCanvas.getContext('2d');
+
+                // Define chart colors based on theme
+                const isDarkMode = htmlElement.getAttribute('data-bs-theme') === 'dark';
+                const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+                const labelColor = isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+                const pointColor = isDarkMode ? '#6ea8fe' : '#0d6efd'; // Example: Lighter blue for dark mode
+                const lineBackgroundColor = isDarkMode ? 'rgba(110, 168, 254, 0.2)' : 'rgba(13, 110, 253, 0.1)';
+                const legendColor = isDarkMode ? '#fff' : '#666';
+
                 modalChartInstance = new Chart(ctx, {
-                    type: 'line', data: { labels: chartData.labels, datasets: [{ label: `Prix (${cryptoSymbol} - CAD)`, data: chartData.datasets[0].data, borderColor: chartData.datasets[0].borderColor || '#0d6efd', backgroundColor: chartData.datasets[0].backgroundColor || 'rgba(13, 110, 253, 0.1)', tension: chartData.datasets[0].tension || 0.3, fill: chartData.datasets[0].fill !== undefined ? chartData.datasets[0].fill : true, pointRadius: 2, pointHoverRadius: 5 }] },
-                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false, ticks: { callback: value => formatCurrency(value) } } }, plugins: { legend: { display: true }, tooltip: { callbacks: { label: context => context.parsed.y !== null ? formatCurrency(context.parsed.y) : '' } } } }
+                    type: 'line',
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [{
+                            label: `Prix (${cryptoSymbol} - CAD)`,
+                            data: chartData.datasets[0].data,
+                            borderColor: pointColor,
+                            backgroundColor: lineBackgroundColor,
+                            tension: 0.3,
+                            fill: true,
+                            pointRadius: 2,
+                            pointHoverRadius: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: {
+                            x: { ticks: { color: labelColor }, grid: { color: gridColor } },
+                            y: { beginAtZero: false, ticks: { callback: value => formatCurrency(value), color: labelColor }, grid: { color: gridColor } }
+                        },
+                        plugins: { legend: { display: true, labels: { color: legendColor } }, tooltip: { callbacks: { label: context => context.parsed.y !== null ? formatCurrency(context.parsed.y) : '' } } }
+                    }
                 });
                 modalChartLoadingEl.classList.add('d-none');
                 modalChartContainerEl.classList.remove('d-none');
