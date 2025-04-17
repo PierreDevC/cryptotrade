@@ -50,7 +50,7 @@ require_once __DIR__ . '/app/Core/Session.php';
                             <input type="text" class="form-control" id="fullName" name="fullName" required>
                         </div>
                         <div class="mb-3">
-                            <label for="email" class="form-label">Addresse courriel</label>
+                            <label for="email" class="form-label">Adresse courriel</label>
                             <input type="email" class="form-control" id="email" name="email" required>
                         </div>
                         <div class="mb-3">
