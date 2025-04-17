@@ -2,6 +2,11 @@
 // /cryptotrade/app/Controllers/UserController.php
 namespace App\Controllers;
 
+/**
+ * Développeur assignés(s) : Pierre
+ * Entité : Classe 'UserController' de la couche Controllers
+ */
+
 use App\Core\Session;
 use App\Core\Request;
 use App\Utils\AuthGuard;
@@ -19,13 +24,13 @@ class UserController {
         $this->userModel = new User($db);
     }
 
-    // API Endpoint: Handle Profile Update Request
+    // Point API: MAJ Profil
     public function updateProfile() {
-        AuthGuard::protect(); // User must be logged in
+        AuthGuard::protect(); // Faut être connecté
         $userId = AuthGuard::user();
         $body = $this->request->getBody();
 
-        // Extract data
+        // Je récupère les infos
         $fullname = trim($body['fullname'] ?? '');
         $email = trim($body['email'] ?? '');
         $currentPassword = $body['currentPassword'] ?? '';
@@ -36,7 +41,7 @@ class UserController {
         $passwordUpdated = false;
         $updateMessages = [];
 
-        // --- Validate basic fields ---
+        // --- Validations de base ---
         if (empty($fullname) || empty($email)) {
             return $this->jsonResponse(false, 'Full name and email are required.', null, 400);
         }
@@ -44,22 +49,22 @@ class UserController {
             return $this->jsonResponse(false, 'Invalid email format.', null, 400);
         }
 
-        // --- Update Profile Info (Fullname & Email) ---
+        // --- MAJ Infos Profil (Nom & Email) ---
         try {
             $currentUser = $this->userModel->findById($userId);
-            // Only update if different to avoid unnecessary DB call / email check
+            // Je MAJ que si c'est différent (perf BDD / check email)
             if ($currentUser['fullname'] !== $fullname || $currentUser['email'] !== $email) {
                 $updateResult = $this->userModel->updateProfile($userId, $fullname, $email);
                 if ($updateResult) {
                     $profileUpdated = true;
                     $updateMessages[] = 'Profile details updated successfully.';
-                    // Update session fullname if changed
+                    // MAJ session si nom changé
                     if ($currentUser['fullname'] !== $fullname) {
                          Session::set('user_fullname', $fullname);
                     }
                 } else {
-                    // updateProfile returns false likely due to email conflict
-                    return $this->jsonResponse(false, 'Email address is already in use by another account.', null, 409); // Conflict
+                    // updateProfile false = conflit email
+                    return $this->jsonResponse(false, 'Email address is already in use by another account.', null, 409); // Conflit
                 }
             }
         } catch (\PDOException $e) {
@@ -67,7 +72,7 @@ class UserController {
             return $this->jsonResponse(false, 'Database error updating profile.', null, 500);
         }
 
-        // --- Update Password (if new password provided) ---
+        // --- MAJ Mot de passe (si nouveau fourni) ---
         if (!empty($newPassword)) {
             if (empty($currentPassword)) {
                 return $this->jsonResponse(false, 'Current password is required to set a new one.', null, 400);
@@ -75,8 +80,8 @@ class UserController {
             if ($newPassword !== $confirmPassword) {
                  return $this->jsonResponse(false, 'New passwords do not match.', null, 400);
             }
-            // Basic password length validation (optional)
-            if (strlen($newPassword) < 6) { // Example minimum length
+            // Valid longueur mdp (optionnel)
+            if (strlen($newPassword) < 6) { // Ex: min 6 chars
                  return $this->jsonResponse(false, 'New password must be at least 6 characters long.', null, 400);
             }
 
@@ -88,10 +93,10 @@ class UserController {
                         $updateMessages[] = 'Password updated successfully.';
                         break;
                     case 'invalid_current_password':
-                         return $this->jsonResponse(false, 'The current password you entered is incorrect.', null, 403); // Forbidden
+                         return $this->jsonResponse(false, 'The current password you entered is incorrect.', null, 403); // Interdit
                     case 'update_failed':
-                        throw new \Exception('Password update failed in model.'); // Treat as server error
-                    case 'user_not_found': // Should not happen if AuthGuard worked
+                        throw new \Exception('Password update failed in model.'); // Erreur serveur
+                    case 'user_not_found': // Devrait pas arriver avec AuthGuard
                          error_log("User {$userId} not found during password update despite being logged in.");
                          return $this->jsonResponse(false, 'User not found.', null, 404);
                 }
@@ -104,18 +109,18 @@ class UserController {
             }
         }
 
-        // --- Final Response ---
+        // --- Réponse Finale ---
         if ($profileUpdated || $passwordUpdated) {
-             // Return specific data if needed by frontend (e.g., new fullname)
+             // Je retourne data si besoin (ex: nouveau nom)
             $responseData = ['fullname' => $fullname];
             return $this->jsonResponse(true, implode(' ', $updateMessages), $responseData);
         } else {
-            // No changes were made
+            // Rien n'a changé
             return $this->jsonResponse(true, 'No changes detected.');
         }
     }
 
-    // API Endpoint: Get Transaction History for the logged-in user
+    // Point API: Historique transactions user co
     public function getUserTransactions() {
         AuthGuard::protect();
         $userId = AuthGuard::user();
@@ -123,34 +128,34 @@ class UserController {
         $transactionModel = new \App\Models\Transaction($this->db);
         $transactions = $transactionModel->findAllByUser($userId);
 
-        // Format data for display
+        // Formatage pour affichage
         $formattedTransactions = [];
-        $usdToCadRate = 1.35; // TODO: Get from config
+        $usdToCadRate = 1.35; // TODO: Prendre de la config
 
         foreach($transactions as $tx) {
-            // Determine the sign for display based on transaction type
+            // Signe pour affichage (+/-)
             $amountSign = ($tx['type'] == 'buy') ? '-' : '+';
             $quantitySign = ($tx['type'] == 'buy') ? '+' : '-';
 
              $formattedTransactions[] = [
                   'id' => $tx['id'],
                   'timestamp' => date('Y-m-d H:i:s', strtotime($tx['timestamp'])),
-                  'type' => ucfirst($tx['type']), // 'Buy' or 'Sell'
+                  'type' => ucfirst($tx['type']), // 'Buy' ou 'Sell'
                   'currency_name' => $tx['currency_name'],
                   'currency_symbol' => $tx['currency_symbol'],
                   'quantity' => number_format((float)$tx['quantity'], 8, '.', ''),
-                  // Provide the raw CAD price (from the _usd column) for JS formatting
+                  // Prix CAD brut (colonne _usd) pour JS
                   'price_per_unit_cad' => (float)$tx['price_per_unit_usd'],
                   'total_amount_cad' => number_format((float)$tx['total_amount_cad'], 2, '.', ','),
                   'total_amount_cad_display' => $amountSign . number_format((float)$tx['total_amount_cad'], 2, '.', ',') . '$',
-                  'type_class' => ($tx['type'] == 'buy') ? 'text-danger' : 'text-success' // Class for styling
+                  'type_class' => ($tx['type'] == 'buy') ? 'text-danger' : 'text-success' // Classe pour style
              ];
         }
 
         $this->jsonResponse(true, 'Transactions retrieved successfully.', $formattedTransactions);
     }
 
-    // Download Transaction History as CSV
+    // Télécharger historique en CSV
     public function downloadTransactionsCsv() {
         AuthGuard::protect();
         $userId = AuthGuard::user();
@@ -158,42 +163,42 @@ class UserController {
         $transactionModel = new \App\Models\Transaction($this->db);
         $transactions = $transactionModel->findAllByUser($userId);
 
-        // Set headers for CSV download
+        // Headers pour dl CSV
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename=transactions-' . date('Y-m-d') . '.csv');
 
-        // Create a file pointer connected to the output stream
+        // Pointeur fichier vers sortie
         $output = fopen('php://output', 'w');
 
-        // Output the CSV header row
+        // Entête CSV
         fputcsv($output, ['Date', 'Type', 'Crypto Name', 'Symbol', 'Quantity', 'Price Per Unit (CAD)', 'Total Amount (CAD)']);
 
-        // Output data rows
+        // Lignes de données
         foreach ($transactions as $tx) {
             fputcsv($output, [
                 date('Y-m-d H:i:s', strtotime($tx['timestamp'])),
                 ucfirst($tx['type']),
                 $tx['currency_name'],
                 $tx['currency_symbol'],
-                number_format((float)$tx['quantity'], 8, '.', ''), // Raw quantity
-                number_format((float)$tx['price_per_unit_usd'], 2, '.', ''), // Raw price (representing CAD)
-                number_format((float)$tx['total_amount_cad'], 2, '.', '') // Raw amount
+                number_format((float)$tx['quantity'], 8, '.', ''), // Quantité brute
+                number_format((float)$tx['price_per_unit_usd'], 2, '.', ''), // Prix brut (représente CAD)
+                number_format((float)$tx['total_amount_cad'], 2, '.', '') // Montant brut
             ]);
         }
 
         fclose($output);
-        exit; // Stop script execution after generating CSV
+        exit; // Stop après générer CSV
     }
 
-    // Download Transaction History as PDF (Requires a PDF library like TCPDF)
+    // Télécharger historique en PDF (Besoin lib PDF genre TCPDF)
     public function downloadTransactionsPdf() {
         AuthGuard::protect();
         $userId = AuthGuard::user();
 
-        // Check if a PDF library class exists (e.g., TCPDF)
+        // Check si lib PDF existe (ex: TCPDF)
         if (!class_exists('TCPDF')) {
-            // You could render an error page or return a JSON error
-            http_response_code(501); // Not Implemented
+            // Erreur JSON ou page d'erreur
+            http_response_code(501); // Pas implémenté
             echo "Erreur: La bibliothèque PDF (TCPDF) n'est pas installée ou configurée.";
             error_log("Attempted PDF download without TCPDF library.");
             exit;
@@ -202,39 +207,39 @@ class UserController {
         $transactionModel = new \App\Models\Transaction($this->db);
         $transactions = $transactionModel->findAllByUser($userId);
 
-        // --- PDF Generation Logic (Example using TCPDF) ---
+        // --- Logique Génération PDF (Exemple TCPDF) ---
         // $pdf = new \TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
-        // Set document information
+        // Infos document
         // $pdf->SetCreator(PDF_CREATOR);
         // $pdf->SetAuthor('CryptoTrade');
         // $pdf->SetTitle('Historique des Transactions');
         // $pdf->SetSubject('Transactions Utilisateur ' . $userId);
 
-        // Set default header/footer data (optional)
+        // Header/footer par défaut (optionnel)
         // $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
         // $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
 
-        // Set margins
+        // Marges
         // $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
         // $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
         // $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
 
-        // Set auto page breaks
+        // Saut page auto
         // $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
 
-        // Add a page
+        // Ajouter page
         // $pdf->AddPage();
 
-        // Set font
+        // Police
         // $pdf->SetFont('helvetica', '', 10);
 
-        // Title
+        // Titre
         // $pdf->Cell(0, 10, 'Historique des Transactions - Utilisateur ' . $userId, 0, 1, 'C');
 
-        // Table Header
+        // Entête Tableau
         // $header = ['Date', 'Type', 'Crypto', 'Qté', 'Prix/U (USD)', 'Total (CAD)'];
-        // $w = [35, 15, 40, 30, 30, 30]; // Column widths
+        // $w = [35, 15, 40, 30, 30, 30]; // Largeurs colonnes
         // $pdf->SetFillColor(224, 235, 255);
         // $pdf->SetTextColor(0);
         // $pdf->SetDrawColor(128, 0, 0);
@@ -244,7 +249,7 @@ class UserController {
         //     $pdf->Cell($w[$i], 7, $header[$i], 1, 0, 'C', 1);
         // $pdf->Ln();
 
-        // Table Data
+        // Données Tableau
         // $pdf->SetFillColor(245, 245, 245);
         // $pdf->SetTextColor(0);
         // $pdf->SetFont('');
@@ -259,11 +264,11 @@ class UserController {
         //     $pdf->Ln();
         //     $fill=!$fill;
         // }
-        // $pdf->Cell(array_sum($w), 0, '', 'T'); // Closing line
+        // $pdf->Cell(array_sum($w), 0, '', 'T'); // Ligne fin
 
-        // --- End PDF Generation Logic ---
+        // --- Fin Logique Génération PDF ---
 
-        // Set headers and output the PDF
+        // Headers et sortie PDF
         // header('Content-Type: application/pdf');
         // header('Content-Disposition: attachment; filename="transactions-' . date('Y-m-d') . '.pdf"');
         // header('Cache-Control: private, max-age=0, must-revalidate');
@@ -271,13 +276,13 @@ class UserController {
         // $pdf->Output('transactions-' . date('Y-m-d') . '.pdf', 'D'); // D = Force Download
         // exit;
 
-        // Placeholder until library is implemented:
-        http_response_code(501); // Not Implemented
+        // Temporaire jusqu'à implémentation lib:
+        http_response_code(501); // Pas implémenté
         echo "Fonctionnalité PDF non implémentée. Requiert une bibliothèque PDF côté serveur.";
         exit;
     }
 
-    // Helper to send JSON responses
+    // Aide pour réponses JSON
     private function jsonResponse($success, $message = '', $data = null, $statusCode = null) {
         header('Content-Type: application/json');
         if ($statusCode === null) {

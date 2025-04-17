@@ -2,6 +2,11 @@
 // /cryptotrade/app/Controllers/MarketController.php
 namespace App\Controllers;
 
+/**
+ * Développeur assignés(s) : Moses
+ * Entité : Classe 'MarketController' de la couche Controllers
+ */
+
 use App\Core\Session;
 use App\Utils\AuthGuard;
 use App\Models\Currency;
@@ -11,8 +16,8 @@ use PDO;
 class MarketController {
     private $db;
     private $currencyModel;
-    private const UPDATE_INTERVAL = 60; // Update prices every 60 seconds
-    private const STORAGE_PATH = __DIR__ . '/../../storage'; // Path to storage directory
+    private const UPDATE_INTERVAL = 60; // Mise à jour prix: 60s
+    private const STORAGE_PATH = __DIR__ . '/../../storage'; // Dossier stockage
     private const LAST_UPDATE_FILE = self::STORAGE_PATH . '/last_update.txt';
 
     public function __construct(PDO $db) {
@@ -20,15 +25,15 @@ class MarketController {
         $this->currencyModel = new Currency($db);
     }
 
-    // API Endpoint: Get list of all available cryptos
+    // Point API: Liste des cryptos
     public function getCryptoList() {
-        AuthGuard::protect(); // Should be logged in to see market data
+        AuthGuard::protect(); // Doit être connecté
 
-        $this->attemptPriceUpdate(); // Attempt to update prices based on interval
+        $this->attemptPriceUpdate(); // Mise à jour prix (si intervalle ok)
 
         $currencies = $this->currencyModel->findAll();
 
-        // Format data for the table in dashboard.html
+        // Formatage pour tableau
         $formattedList = [];
         $rank = 1;
         foreach ($currencies as $currency) {
@@ -52,14 +57,14 @@ class MarketController {
         exit;
     }
 
-    // API Endpoint: Get historical chart data for a specific crypto
+    // Point API: Données graphiques crypto
     public function getCryptoChartData($params) {
         AuthGuard::protect();
         $currencyId = $params['id'] ?? null;
 
         if (!$currencyId) {
              header('Content-Type: application/json');
-             http_response_code(400); // Bad Request
+             http_response_code(400); // Mauvaise requête
              echo json_encode(['success' => false, 'message' => 'Currency ID is required.']);
              exit;
         }
@@ -68,20 +73,20 @@ class MarketController {
 
         if (!$currency) {
             header('Content-Type: application/json');
-            http_response_code(404); // Not Found
+            http_response_code(404); // Non trouvé
             echo json_encode(['success' => false, 'message' => 'Currency not found.']);
             exit;
         }
 
-        // Generate simulated data using the simulator
+        // Génération données simulées
         $chartData = MarketSimulator::generateHistoricalData(
             $currency['current_price_usd'],
             $currency['base_volatility'],
             $currency['base_trend'],
-            30 // Number of periods (e.g., days)
+            30 // Nombre de périodes (ex: jours)
         );
 
-         // Prepare data for ChartJS
+         // Préparation pour ChartJS
         $response = [
             'labels' => $chartData['labels'],
             'datasets' => [[
@@ -100,7 +105,7 @@ class MarketController {
         exit;
     }
 
-     // Helper to format large market cap numbers
+     // Formatage market cap
     private function formatMarketCap($number) {
         if ($number >= 1e12) {
             return '$' . number_format($number / 1e12, 1) . 'T';
@@ -114,9 +119,9 @@ class MarketController {
         return '$' . number_format($number, 0);
     }
 
-     // Re-use the image URL helper
+     // Réutilisation aide image URL
     private function getCryptoImageUrl($symbol) {
-         // Simple mapping - expand as needed
+         // Mapping simple
         $map = [
              'BTC' => 'https://assets.coingecko.com/coins/images/1/thumb/bitcoin.png',
              'ETH' => 'https://assets.coingecko.com/coins/images/279/thumb/ethereum.png',
@@ -134,20 +139,20 @@ class MarketController {
         return $map[strtoupper($symbol)] ?? 'https://via.placeholder.com/20';
     }
 
-    // NEW: Method to attempt price update
+    // NOUVEAU : Tentative mise à jour prix
     private function attemptPriceUpdate() {
-        // Ensure storage directory exists and is writable
+        // Vérif dossier stockage (existe/écrit)
         if (!is_dir(self::STORAGE_PATH)) {
             if (!mkdir(self::STORAGE_PATH, 0775, true)) {
                  error_log("MarketController: Failed to create storage directory: " . self::STORAGE_PATH);
-                 return; // Cannot proceed without storage
+                 return; // Impossible de continuer sans stockage
             }
         }
         if (!is_writable(self::STORAGE_PATH)) {
              error_log("MarketController: Storage directory not writable: " . self::STORAGE_PATH);
-             // Attempt to make it writable (might not work depending on permissions)
+             // Tentative chmod (peut échouer)
              // chmod(self::STORAGE_PATH, 0775);
-             // return; // Optionally return if still not writable
+             // Option : retourner si toujours pas accessible
         }
 
         $lastUpdateTime = 0;
@@ -160,30 +165,30 @@ class MarketController {
         if (($currentTime - $lastUpdateTime) > self::UPDATE_INTERVAL) {
             try {
                 $allCurrencies = $this->currencyModel->findAll();
-                $this->db->beginTransaction(); // Start transaction for multiple updates
+                $this->db->beginTransaction(); // Je démarre une transaction
 
                 foreach ($allCurrencies as $currency) {
-                    // Simulate price change
+                    // Je simule le changement de prix
                     $currentPrice = (float)$currency['current_price_usd'];
                     $volatility = (float)$currency['base_volatility'];
                     $trend = (float)$currency['base_trend'];
 
-                    // Simple random factor between -1 and 1
+                    // Facteur aléatoire simple (-1 à 1)
                     $randomInfluence = (mt_rand(-1000, 1000) / 1000.0);
 
-                    // Calculate new price: current * (1 + trend) * (1 + volatility * random)
+                    // Calcul nouveau prix : actuel * (1+tendance) * (1+volatilité*aléatoire)
                     $newPrice = $currentPrice * (1 + $trend) * (1 + $volatility * $randomInfluence);
-                    $newPrice = max(0.00001, $newPrice); // Don't let price be zero or negative
+                    $newPrice = max(0.00001, $newPrice); // Prix > 0
 
-                    // Simulate change % fluctuation (simplified)
+                    // Simulation fluctuation % (simple)
                     $currentChange = (float)$currency['change_24h_percent'];
-                    // Make change fluctuate slightly based on the same random influence
-                    $changeFluctuation = $randomInfluence * 5; // Adjust multiplier for sensitivity
+                    // Le changement fluctue légèrement
+                    $changeFluctuation = $randomInfluence * 5; // Ajuster multiplicateur (sensibilité)
                     $newChangePercent = $currentChange + $changeFluctuation;
-                    // Keep change within a plausible range (e.g., -90% to +500%)
+                    // Changement entre -90% et +500%
                     $newChangePercent = max(-90, min(500, $newChangePercent));
 
-                    // Update DB
+                    // Mise à jour BDD
                     $this->currencyModel->updatePriceAndChange(
                         (int)$currency['id'],
                         $newPrice,
@@ -191,26 +196,26 @@ class MarketController {
                     );
                 }
 
-                $this->db->commit(); // Commit all updates
+                $this->db->commit(); // Je valide toutes les mises à jour
 
-                // Update timestamp file
+                // Je mets à jour le fichier timestamp
                 if (file_put_contents(self::LAST_UPDATE_FILE, $currentTime) === false) {
                     error_log("MarketController: Failed to write last update time to " . self::LAST_UPDATE_FILE);
                 }
-                 error_log("MarketController: Prices updated successfully at " . $currentTime); // Log success
+                 error_log("MarketController: Prices updated successfully at " . $currentTime); // Log succès
 
             } catch (\PDOException $e) {
                 $this->db->rollBack();
                 error_log("MarketController: Failed to update prices: " . $e->getMessage());
             } catch (\Exception $e) {
                 error_log("MarketController: General error during price update: " . $e->getMessage());
-                 // Potentially rollback if DB transaction was started and commit didn't happen
+                 // Rollback potentiel si transaction BDD non commitée
                  if ($this->db->inTransaction()) {
                      $this->db->rollBack();
                  }
             }
         } else {
-            // Optional: Log that update was skipped due to interval
+            // Optionnel : Log si màj sautée (intervalle)
              // error_log("MarketController: Price update skipped, interval not reached.");
         }
     }

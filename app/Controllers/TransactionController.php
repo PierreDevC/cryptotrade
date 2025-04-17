@@ -2,6 +2,11 @@
 // /cryptotrade/app/Controllers/TransactionController.php
 namespace App\Controllers;
 
+/**
+ * Développeur assignés(s) : Aboubacar
+ * Entité : Classe 'TransactionController' de la couche Controllers
+ */
+
 use App\Core\Session;
 use App\Core\Request;
 use App\Utils\AuthGuard;
@@ -29,7 +34,7 @@ class TransactionController {
         $this->transactionModel = new Transaction($db);
     }
 
-    // API Endpoint: Handle Buy Request
+    // Point API: Gérer Achat
     public function buy() {
         AuthGuard::protect();
         $userId = AuthGuard::user();
@@ -37,9 +42,9 @@ class TransactionController {
 
         $currencyId = filter_var($body['currencyId'] ?? null, FILTER_VALIDATE_INT);
         $quantity = filter_var($body['quantity'] ?? null, FILTER_VALIDATE_FLOAT);
-        $amountCad = filter_var($body['amountCad'] ?? null, FILTER_VALIDATE_FLOAT); // Total CAD cost from modal
+        $amountCad = filter_var($body['amountCad'] ?? null, FILTER_VALIDATE_FLOAT); // Coût total CAD (modale)
 
-         // Basic Validation
+         // Validations simples
         if (!$currencyId || !$quantity || $quantity <= 0 || !$amountCad || $amountCad <= 0) {
              return $this->jsonResponse(false, 'Invalid input data.');
         }
@@ -51,20 +56,20 @@ class TransactionController {
 
          $user = $this->userModel->findById($userId);
         if (!$user) {
-             return $this->jsonResponse(false, 'User not found.'); // Should not happen if logged in
+             return $this->jsonResponse(false, 'User not found.'); // Ne devrait pas arriver si connecté
         }
 
-        // --- Check Sufficient Funds ---
-         // Recalculate expected cost based on *current* price for safety check
-         // (allow small discrepancy from modal price due to fluctuation)
-         // Get from config ideally
+        // --- Vérif Fonds Suffisants ---
+         // Recalcul coût estimé (prix *actuel*) par sécurité
+         // (petite diff tolérée vs prix modale)
+         // Idéalement via config
          $currentPriceCAD = (float)$currency['current_price_usd'];
          $estimatedCostCAD = $quantity * $currentPriceCAD;
 
-         // Allow maybe 1% difference from the amount confirmed in modal
+         // Tolère ~1% diff vs montant modale
          if ($amountCad > 0 && abs($estimatedCostCAD - $amountCad) / $amountCad > 0.01) {
-               // return $this->jsonResponse(false, 'Price has changed significantly. Please try again.');
-               // For simplicity in this school project, let's proceed with the amountCAD from modal
+               // return $this->jsonResponse(false, 'Le prix a changé significativement. Réessayez.');
+               // Pour simplifier (projet école), on utilise amountCad de la modale
          }
 
 
@@ -72,15 +77,15 @@ class TransactionController {
             return $this->jsonResponse(false, 'Insufficient CAD balance.');
         }
 
-        // --- Perform Transaction within DB Transaction ---
+        // --- Exécute dans une Transaction BDD ---
         try {
             $this->db->beginTransaction();
 
-            // 1. Deduct CAD balance
+            // 1. Déduit solde CAD
             $balanceUpdated = $this->userModel->updateBalance($userId, -$amountCad);
             if (!$balanceUpdated) throw new PDOException("Failed to update user balance.");
 
-            // 2. Add Crypto to Wallet
+            // 2. Ajoute Crypto au Wallet
             $walletUpdated = $this->walletModel->updateQuantity($userId, $currencyId, $quantity);
              if (!$walletUpdated) throw new PDOException("Failed to update wallet quantity.");
 
@@ -91,7 +96,7 @@ class TransactionController {
                 'currency_id' => $currencyId,
                 'type' => 'buy',
                 'quantity' => $quantity,
-                // Log the CAD price at the time of transaction (into the _usd column)
+                // Log prix CAD au moment (dans colonne _usd)
                 'price_per_unit_usd' => $currentPriceCAD,
                 'total_amount_cad' => $amountCad
             ];
@@ -103,12 +108,12 @@ class TransactionController {
 
         } catch (PDOException $e) {
             $this->db->rollBack();
-            error_log("Transaction Failed: " . $e->getMessage()); // Log actual error
+            error_log("Transaction Failed: " . $e->getMessage()); // Log l'erreur réelle
             return $this->jsonResponse(false, 'Transaction failed. Please try again later.');
         }
     }
 
-    // API Endpoint: Handle Sell Request
+    // Point API: Gérer Vente
     public function sell() {
         AuthGuard::protect();
         $userId = AuthGuard::user();
@@ -116,9 +121,9 @@ class TransactionController {
 
         $currencyId = filter_var($body['currencyId'] ?? null, FILTER_VALIDATE_INT);
         $quantity = filter_var($body['quantity'] ?? null, FILTER_VALIDATE_FLOAT);
-        $amountCad = filter_var($body['amountCad'] ?? null, FILTER_VALIDATE_FLOAT); // Total CAD proceeds from modal
+        $amountCad = filter_var($body['amountCad'] ?? null, FILTER_VALIDATE_FLOAT); // Total produit CAD (modale)
 
-        // Basic Validation
+        // Validations simples
         if (!$currencyId || !$quantity || $quantity <= 0 || !$amountCad || $amountCad <= 0) {
             return $this->jsonResponse(false, 'Invalid input data.');
         }
@@ -128,32 +133,32 @@ class TransactionController {
              return $this->jsonResponse(false, 'Currency not found.');
          }
 
-         // --- Check Sufficient Crypto Holdings ---
+         // --- Vérif Avoirs Crypto Suffisants ---
          $walletEntry = $this->walletModel->findByUserAndCurrency($userId, $currencyId);
         if (!$walletEntry || $walletEntry['quantity'] < $quantity) {
              return $this->jsonResponse(false, 'Insufficient ' . $currency['symbol'] . ' balance.');
         }
 
-         // Recalculate expected proceeds based on current price for safety check
-         // Treat DB price as CAD
+         // Recalcul produit estimé (prix actuel) par sécurité
+         // Traite prix BDD comme CAD
          $currentPriceCAD = (float)$currency['current_price_usd'];
          $estimatedProceedsCAD = $quantity * $currentPriceCAD;
 
-         // Allow maybe 1% difference
+         // Tolère ~1% diff
           if ($amountCad > 0 && abs($estimatedProceedsCAD - $amountCad) / $amountCad > 0.01) {
-             // return $this->jsonResponse(false, 'Price has changed significantly. Please try again.');
-             // Proceed with amountCAD from modal for simplicity
+             // return $this->jsonResponse(false, 'Le prix a changé significativement. Réessayez.');
+             // On utilise amountCad de la modale pour simplifier
           }
 
-        // --- Perform Transaction within DB Transaction ---
+        // --- Exécute dans une Transaction BDD ---
         try {
             $this->db->beginTransaction();
 
-             // 1. Deduct Crypto from Wallet
+             // 1. Déduit Crypto du Wallet
              $walletUpdated = $this->walletModel->updateQuantity($userId, $currencyId, -$quantity);
              if (!$walletUpdated) throw new PDOException("Failed to update wallet quantity.");
 
-             // 2. Add CAD balance
+             // 2. Ajoute solde CAD
              $balanceUpdated = $this->userModel->updateBalance($userId, $amountCad);
              if (!$balanceUpdated) throw new PDOException("Failed to update user balance.");
 
@@ -164,7 +169,7 @@ class TransactionController {
                  'currency_id' => $currencyId,
                  'type' => 'sell',
                  'quantity' => $quantity,
-                 'price_per_unit_usd' => $currentPriceCAD, // Log CAD price at time of sale (into _usd column)
+                 'price_per_unit_usd' => $currentPriceCAD, // Log prix CAD (dans colonne _usd)
                  'total_amount_cad' => $amountCad
              ];
              $logged = $this->transactionModel->create($transactionData);
@@ -181,11 +186,11 @@ class TransactionController {
         }
     }
 
-     // Helper to send JSON responses
+     // Aide pour réponses JSON
     private function jsonResponse($success, $message = '', $data = []) {
         header('Content-Type: application/json');
         if (!$success) {
-            http_response_code(400); // Bad request or logical error
+            http_response_code(400); // Mauvaise requête ou erreur logique
         }
         echo json_encode([
             'success' => $success,
