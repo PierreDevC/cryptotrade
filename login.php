@@ -26,7 +26,14 @@ require_once __DIR__ . '/app/Core/Session.php';
                 <a href="/cryptotrade/" class="text-decoration-none">
                     <h1 class="position-absolute text-white p-4 brand-logo" style="z-index: 1;">CryptoTrade</h1>
                 </a>
-                <img src="/cryptotrade/img/login.jpg" class="w-100 h-100" style="object-fit: cover;" alt="Login background image">
+                <?php
+                    // NEW: Randomly select background image
+                    $loginImages = ['login.jpg', 'login2.jpg', 'login3.jpg'];
+                    $selectedIndex = mt_rand(0, count($loginImages) - 1);
+                    $selectedImageFile = $loginImages[$selectedIndex];
+                    $imagePath = '/cryptotrade/img/' . $selectedImageFile;
+                ?>
+                <img src="<?php echo htmlspecialchars($imagePath); ?>" class="w-100 h-100" style="object-fit: cover;" alt="Login background image">
             </div>
             <!-- Right column -->
             <div class="col-12 col-md-6 col-lg-6 d-flex align-items-center justify-content-center">
