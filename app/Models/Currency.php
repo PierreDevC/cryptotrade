@@ -2,6 +2,11 @@
 // /cryptotrade/app/Models/Currency.php
 namespace App\Models;
 
+/**
+ * Développeur assignés(s) : Moses
+ * Entité : Classe 'Currency' de la couche Models
+ */
+
 use PDO;
 
 class Currency {
@@ -30,9 +35,9 @@ class Currency {
         return $stmt->fetch();
     }
 
-    // Optional: Update market data (used by simulator or external feed)
+    // Pour mettre à jour les données du marché (si besoin).
     public function updateMarketData($id, $data) {
-         // Example: only updating price and change
+         // Je change juste le prix et la variation ici.
          $sql = "UPDATE currencies SET
                     current_price_usd = :price,
                     change_24h_percent = :change
@@ -44,7 +49,7 @@ class Currency {
         return $stmt->execute();
     }
 
-    // NEW: Update price and change percentage for a currency
+    // Je mets à jour prix et % de change.
     public function updatePriceAndChange($id, $newPrice, $newChangePercent) {
          $sql = "UPDATE currencies SET
                     current_price_usd = :price,
@@ -58,7 +63,7 @@ class Currency {
         return $stmt->execute();
     }
 
-    // NEW: Create a new currency
+    // Je crée une devise.
     public function create($data) {
         $sql = "INSERT INTO currencies (name, symbol, current_price_usd, change_24h_percent, market_cap_usd, base_volatility, base_trend)
                 VALUES (:name, :symbol, :price, :change, :market_cap, :volatility, :trend)";
@@ -66,16 +71,16 @@ class Currency {
 
         $stmt->bindParam(':name', $data['name']);
         $stmt->bindParam(':symbol', $data['symbol']);
-        $stmt->bindParam(':price', $data['current_price_cad']);
+        $stmt->bindParam(':price', $data['current_price_cad']); // Note: Assuming CAD price insertion is intended here despite USD column name
         $stmt->bindParam(':change', $data['change_24h_percent']);
-        $stmt->bindParam(':market_cap', $data['market_cap_cad']);
+        $stmt->bindParam(':market_cap', $data['market_cap_cad']); // Note: Assuming CAD market cap insertion is intended here despite USD column name
         $stmt->bindParam(':volatility', $data['base_volatility']);
         $stmt->bindParam(':trend', $data['base_trend']);
 
         return $stmt->execute();
     }
 
-    // NEW: Update an existing currency by ID
+    // Je mets à jour une devise (via ID).
     public function update($id, $data) {
         $sql = "UPDATE currencies SET
                     name = :name,
@@ -91,21 +96,19 @@ class Currency {
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->bindParam(':name', $data['name']);
         $stmt->bindParam(':symbol', $data['symbol']);
-        $stmt->bindParam(':price', $data['current_price_cad']);
+        $stmt->bindParam(':price', $data['current_price_cad']); // Note: Assuming CAD price update is intended here despite USD column name
         $stmt->bindParam(':change', $data['change_24h_percent']);
-        $stmt->bindParam(':market_cap', $data['market_cap_cad']);
+        $stmt->bindParam(':market_cap', $data['market_cap_cad']); // Note: Assuming CAD market cap update is intended here despite USD column name
         $stmt->bindParam(':volatility', $data['base_volatility']);
         $stmt->bindParam(':trend', $data['base_trend']);
 
         return $stmt->execute();
     }
 
-    // NEW: Delete a currency by ID
+    // Je supprime une devise (via ID).
     public function deleteById($id) {
-        // TODO: Consider implications - what happens to user wallets holding this? Transactions?
-        // For now, simple delete.
-        // You might want to prevent deletion if wallets hold this currency,
-        // or set holdings to zero, or archive the currency instead.
+        // TODO : Attention si je supprime ! Ça impacte les portefeuilles/transactions.
+        // Pour l'instant, suppression simple, mais on pourrait bloquer/archiver/mettre à zéro.
         $sql = "DELETE FROM currencies WHERE id = :id";
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);

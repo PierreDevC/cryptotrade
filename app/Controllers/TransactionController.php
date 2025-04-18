@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Models\Wallet;
 use App\Models\Currency;
 use App\Models\Transaction;
+use App\Utils\Csrf;
 use PDO;
 use PDOException;
 
@@ -37,6 +38,8 @@ class TransactionController {
     // Point API: Gérer Achat
     public function buy() {
         AuthGuard::protect();
+        Csrf::protect($this->request);
+
         $userId = AuthGuard::user();
         $body = $this->request->getBody();
 
@@ -116,6 +119,8 @@ class TransactionController {
     // Point API: Gérer Vente
     public function sell() {
         AuthGuard::protect();
+        Csrf::protect($this->request);
+
         $userId = AuthGuard::user();
         $body = $this->request->getBody();
 

@@ -64,7 +64,7 @@ $router->get('/signup', function() {
 
 $router->post('/login', 'App\Controllers\AuthController@login');
 $router->post('/signup', 'App\Controllers\AuthController@signup');
-$router->get('/logout', 'App\Controllers\AuthController@logout');
+$router->post('/logout', 'App\Controllers\AuthController@logout');
 
 // Dashboard Route (Protected) - Controller handles the require
 $router->get('/dashboard', 'App\Controllers\DashboardController@index');

@@ -1,6 +1,101 @@
-// PASTEBIN_DISABLED
+// ADDED: Debug log to check global CSRF variables
+console.log("CSRF Check:", { token: typeof CSRF_TOKEN !== 'undefined' ? CSRF_TOKEN : 'NOT DEFINED', fieldName: typeof CSRF_FIELD_NAME !== 'undefined' ? CSRF_FIELD_NAME : 'NOT DEFINED' });
+
+// Global Constants (from PHP - ensure they are defined before this script)
+// const CSRF_TOKEN = \"...\"; // Example, will be injected by PHP
+// const CSRF_FIELD_NAME = \"_csrf_token\"; // Example
+// const BASE_URL = \"http://localhost/cryptotrade\"; // Example, injected by PHP
+
+// Base URL for API calls (can be dynamic based on environment)
+// const API_BASE_URL = \"/cryptotrade/api\"; // CHANGED: Use absolute URL
+const API_BASE_URL = `${BASE_URL}/api`; // Use the injected BASE_URL
+
+// Chart instances (to manage updates/destruction)
+let portfolioChartInstance = null;
+
+// ADDED: fetchWithCsrf function definition
+/**
+ * NEW: Wrapper for fetch requests to automatically include CSRF token in body for POST/DELETE.
+ * Handles JSON parsing and basic error handling.
+ */
+async function fetchWithCsrf(url, options = {}) {
+    const method = options.method ? options.method.toUpperCase() : 'GET';
+
+    // Add CSRF token to body for state-changing requests
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+        // Ensure body exists and is an object or FormData
+        let bodyData;
+        if (options.body instanceof FormData) {
+            bodyData = options.body;
+        } else if (typeof options.body === 'string') {
+            try {
+                bodyData = JSON.parse(options.body);
+            } catch (e) {
+                console.error('Could not parse options.body as JSON. Ensure it\'s a valid JSON string or an object/FormData.');
+                bodyData = {}; // Fallback to an empty object
+            }
+        } else {
+            bodyData = options.body || {};
+        }
+
+        // Add CSRF token
+        if (bodyData instanceof FormData) {
+            bodyData.append(CSRF_FIELD_NAME, CSRF_TOKEN);
+        } else {
+             // Assume it's a plain object for JSON stringify later
+            bodyData[CSRF_FIELD_NAME] = CSRF_TOKEN;
+        }
+
+        // Re-assign the modified body
+        // If it was FormData, keep it as FormData
+        // Otherwise, stringify the object for JSON
+        if (!(bodyData instanceof FormData)) {
+            options.body = JSON.stringify(bodyData);
+            // Ensure Content-Type is set for JSON
+            if (!options.headers) {
+                options.headers = {};
+            }
+            if (!options.headers['Content-Type']) {
+                options.headers['Content-Type'] = 'application/json';
+            }
+        }
+    }
+
+    try {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            // Try to parse error message from JSON response
+            let errorData = { message: `HTTP error! Status: ${response.status}` };
+            try {
+                const errorJson = await response.json();
+                if (errorJson && errorJson.message) {
+                    errorData.message = errorJson.message;
+                }
+            } catch (e) {
+                // Ignore if response is not JSON
+            }
+            // Log the error with more context
+             console.error(`Fetch error for ${url}: ${response.status} - ${errorData.message}`);
+             // Add the status code to the error object for more specific handling
+             errorData.statusCode = response.status;
+            throw new Error(errorData.message, { cause: errorData });
+        }
+        // Handle no content responses (e.g., successful DELETE)
+        if (response.status === 204) {
+            return { success: true }; // Or return null/undefined based on convention
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Fetch Error:', error);
+        // Re-throw the error to be caught by the calling function
+        // Include the status code if available from the fetch error cause
+        const statusCode = error.cause?.statusCode;
+        throw new Error(error.message, { cause: { statusCode } });
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    const API_BASE_URL = '/cryptotrade/api'; // Use root-relative path
+    const API_BASE_URL = `${BASE_URL}/api`; // Use the injected BASE_URL
 
     // --- Selectors ---
     const accountTypeEl = document.querySelector('.account-type');
@@ -292,34 +387,34 @@ document.addEventListener('DOMContentLoaded', function() {
         const endpoint = action === 'Acheter' ? '/transaction/buy' : '/transaction/sell';
 
         try {
-            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            const data = await fetchWithCsrf(`${API_BASE_URL}${endpoint}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({ currencyId: crypto.id, quantity, amountCad })
+                body: { currencyId: crypto.id, quantity, amountCad }
             });
-            const result = await response.json();
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || `Erreur ${response.status} lors de la transaction.`);
-            }
 
-            if(confirmationModal) confirmationModal.hide();
-            const chartModalInstance = bootstrap.Modal.getInstance(cryptoChartModalEl);
-            if (chartModalInstance) {
-                chartModalInstance.hide();
+            if (data.success) {
+                if(confirmationModal) confirmationModal.hide();
+                const chartModalInstance = bootstrap.Modal.getInstance(cryptoChartModalEl);
+                if (chartModalInstance) {
+                    chartModalInstance.hide();
+                }
+                console.log('Transaction réussie:', data.message);
+                fetchDashboardData();
+                if (amountInput) amountInput.value = '';
+                if (quantityInput) quantityInput.value = '';
+                if (buyButton) buyButton.disabled = true;
+                if (sellButton) sellButton.disabled = true;
+                if (tradeInfoEl) tradeInfoEl.classList.add('d-none');
+                selectedCryptoForTrade = null;
+                if (nameElBuySell) nameElBuySell.textContent = 'Sélectionnez une cryptomonnaie...';
+                if (priceElBuySell) priceElBuySell.textContent = `Prix actuel: --`;
+                const activeRow = cryptoListTableBody.querySelector('tr.table-active');
+                if(activeRow) activeRow.classList.remove('table-active');
+            } else {
+                console.error(`Erreur lors de l'exécution (${action}):`, data.message);
+                confirmErrorEl.textContent = `Erreur: ${data.message}`;
+                confirmErrorEl.classList.remove('d-none');
             }
-            console.log('Transaction réussie:', result.message);
-            fetchDashboardData();
-            if (amountInput) amountInput.value = '';
-            if (quantityInput) quantityInput.value = '';
-            if (buyButton) buyButton.disabled = true;
-            if (sellButton) sellButton.disabled = true;
-            if (tradeInfoEl) tradeInfoEl.classList.add('d-none');
-            selectedCryptoForTrade = null;
-            if (nameElBuySell) nameElBuySell.textContent = 'Sélectionnez une cryptomonnaie...';
-            if (priceElBuySell) priceElBuySell.textContent = `Prix actuel: --`;
-            const activeRow = cryptoListTableBody.querySelector('tr.table-active');
-            if(activeRow) activeRow.classList.remove('table-active');
-
         } catch (error) {
             console.error(`Erreur lors de l'exécution (${action}):`, error);
             confirmErrorEl.textContent = `Erreur: ${error.message}`;
@@ -1032,18 +1127,12 @@ document.addEventListener('DOMContentLoaded', function() {
         this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Ajout...';
 
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/currency/add`, {
+            const response = await fetchWithCsrf(`${API_BASE_URL}/admin/currency/add`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify(currencyData)
+                body: currencyData
             });
-            const result = await response.json();
 
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || `Erreur ${response.status}`);
-            }
-
-            displayAdminCurrencyMessage(result.message || 'Devise ajoutée avec succès!');
+            displayAdminCurrencyMessage(response.message || 'Devise ajoutée avec succès!', !response.success);
             clearAdminCurrencyForm();
             await loadAdminCurrenciesDropdown();
             await fetchDashboardData();
@@ -1083,18 +1172,12 @@ document.addEventListener('DOMContentLoaded', function() {
          this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Mise à jour...';
 
         try {
-             const response = await fetch(`${API_BASE_URL}/admin/currency/update/${currencyId}`, {
+             const response = await fetchWithCsrf(`${API_BASE_URL}/admin/currency/update/${currencyId}`, {
                  method: 'POST',
-                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                 body: JSON.stringify(currencyData)
+                 body: currencyData
              });
-             const result = await response.json();
 
-             if (!response.ok || !result.success) {
-                 throw new Error(result.message || `Erreur ${response.status}`);
-             }
-
-             displayAdminCurrencyMessage(result.message || 'Devise mise à jour avec succès!');
+             displayAdminCurrencyMessage(response.message || 'Devise mise à jour avec succès!', !response.success);
              await loadAdminCurrenciesDropdown();
              await fetchDashboardData();
 
@@ -1114,22 +1197,17 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        if (confirm(`Êtes-vous sûr de vouloir supprimer ${currencyName} (ID: ${currencyId}) ? Cette action est irréversible et peut échouer si des portefeuilles la contiennent.`)) {
+        if (confirm(`Êtes-vous sûr de vouloir supprimer ${currencyName} (ID: ${currencyId}) ? Cette action est irréversible.`)) {
 
             this.disabled = true;
             this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Suppression...';
 
             try {
-                const response = await fetch(`${API_BASE_URL}/admin/currency/delete/${currencyId}`, {
+                const response = await fetchWithCsrf(`${API_BASE_URL}/admin/currency/delete/${currencyId}`, {
                     method: 'DELETE'
                 });
-                const result = await response.json();
 
-                if (!response.ok) {
-                     throw new Error(result.message || `Erreur ${response.status}`);
-                 }
-
-                displayAdminCurrencyMessage(result.message || 'Devise supprimée avec succès!');
+                displayAdminCurrencyMessage(response.message || 'Devise supprimée avec succès!', !response.success);
                 clearAdminCurrencyForm();
                 await loadAdminCurrenciesDropdown();
                 await fetchDashboardData();
@@ -1198,21 +1276,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         try {
-            const response = await fetch(`${API_BASE_URL}/user/update`, {
+            const response = await fetchWithCsrf(`${API_BASE_URL}/user/update`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify(formData)
+                body: formData
             });
-            const result = await response.json();
 
-            if (!response.ok || !result.success) {
-                 throw new Error(result.message || `Erreur ${response.status}`);
-             }
+            displayUserProfileMessage(response.message || 'Profil mis à jour avec succès!', !response.success);
 
-            displayUserProfileMessage(result.message || 'Profil mis à jour avec succès!');
-
-             currentUserFullname = result.data?.fullname;
-             currentUserEmail = result.data?.email;
+             currentUserFullname = response.data?.fullname;
+             currentUserEmail = response.data?.email;
 
              if (navbarDropdownButton = document.getElementById('navbarDropdown')) {
                 navbarDropdownButton.textContent = `Compte (${currentUserFullname})`;
@@ -1260,11 +1332,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function fetchAndRenderTransactions() {
-        if (!transactionHistoryTableBody) return;
-
-        transactionHistoryTableBody.innerHTML = '<tr class="loading-placeholder"><td colspan="6" class="text-center py-4">Chargement de l\'historique... <i class="fas fa-spinner fa-spin"></i></td></tr>';
-        if (downloadCsvBtn) downloadCsvBtn.disabled = true;
-        if (downloadPdfBtn) downloadPdfBtn.disabled = true;
+        const loadingRow = '<tr class="loading-placeholder"><td colspan="6" class="text-center py-4">Chargement de l\&#39;historique... <i class="fas fa-spinner fa-spin"></i></td></tr>';
+        transactionHistoryTableBody.innerHTML = loadingRow;
+        downloadCsvBtn.disabled = true;
+        downloadPdfBtn.disabled = true;
 
         try {
             const response = await fetch(`${API_BASE_URL}/user/transactions`);
@@ -1275,15 +1346,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (result.success && Array.isArray(result.data)) {
                 renderTransactionsTable(result.data);
+                if(result.data.length > 0) {
+                    downloadCsvBtn.disabled = false;
+                    downloadPdfBtn.disabled = false;
+                }
             } else {
-                throw new Error(result.message || 'Impossible de charger les transactions.');
+                throw new Error(result.message || 'Failed to load transactions');
             }
-
         } catch (error) {
-            console.error('Error fetching transaction history:', error);
-            if (transactionHistoryTableBody) {
-                transactionHistoryTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Erreur chargement historique: ${error.message}</td></tr>`;
-            }
+            console.error('Error fetching transactions:', error);
+            transactionHistoryTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Erreur: ${error.message}</td></tr>`;
         }
     }
 
@@ -1405,16 +1477,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayAdminCurrencyMessage(message, isError = false) {
         if (!adminMessageArea) return;
         adminMessageArea.textContent = message;
-        adminMessageArea.className = `alert alert-${isError ? 'danger' : 'success'}`;
-        adminMessageArea.classList.remove('d-none');
-         // Optionally hide after a few seconds
-         setTimeout(() => {
-            if (adminMessageArea) {
-                 adminMessageArea.classList.add('d-none');
-                 adminMessageArea.textContent = '';
-                 adminMessageArea.className = 'mb-3'; // Reset class
-             }
-         }, 5000); // Hide after 5 seconds
+        adminMessageArea.className = `alert ${isError ? 'alert-danger' : 'alert-success'}`;
     }
 
     // Reset the admin currency form to its default state (for adding new)
@@ -1498,7 +1561,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayUserProfileMessage(message, isError = false) {
         if (!userProfileMessageArea) return;
         userProfileMessageArea.textContent = message;
-        userProfileMessageArea.className = `alert alert-${isError ? 'danger' : 'success'}`;
+        userProfileMessageArea.className = `alert ${isError ? 'alert-danger' : 'alert-success'}`;
         userProfileMessageArea.classList.remove('d-none');
          // Optionally hide after a few seconds
          setTimeout(() => {

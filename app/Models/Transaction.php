@@ -2,6 +2,11 @@
 // /cryptotrade/app/Models/Transaction.php
 namespace App\Models;
 
+/**
+ * Développeur assignés(s) : Aboubacar
+ * Entité : Classe 'Transaction' de la couche Models
+ */
+
 use PDO;
 
 class Transaction {
@@ -18,7 +23,7 @@ class Transaction {
 
         $stmt->bindParam(':user_id', $data['user_id'], PDO::PARAM_INT);
         $stmt->bindParam(':currency_id', $data['currency_id'], PDO::PARAM_INT);
-        $stmt->bindParam(':type', $data['type']); // 'buy' or 'sell'
+        $stmt->bindParam(':type', $data['type']); // 'achat' ou 'vente'
         $stmt->bindParam(':quantity', $data['quantity']);
         $stmt->bindParam(':price_per_unit_usd', $data['price_per_unit_usd']);
         $stmt->bindParam(':total_amount_cad', $data['total_amount_cad']);
@@ -26,7 +31,7 @@ class Transaction {
         return $stmt->execute();
     }
 
-    // Find transactions for a user (e.g., for history page)
+    // Je cherche les transactions d'un user (pour l'historique, par ex.)
     public function findByUser($userId, $limit = 50) {
          $sql = "SELECT t.*, c.symbol as currency_symbol
                  FROM transactions t
@@ -41,7 +46,7 @@ class Transaction {
          return $stmt->fetchAll();
     }
 
-    // NEW: Find ALL transactions for a user
+    // Je cherche TOUTES les transactions d'un user
     public function findAllByUser($userId) {
         $sql = "SELECT t.*, c.symbol as currency_symbol, c.name as currency_name
                 FROM transactions t
@@ -54,25 +59,24 @@ class Transaction {
         return $stmt->fetchAll();
     }
 
-      // Optional: Get data for portfolio performance chart
+      // Optionnel: Récupérer les données pour le graphique de perf du portefeuille
     public function getPortfolioValueHistory($userId) {
-         // This is complex. It requires summing asset values at different points in time.
-         // A simplified approach might just return recent transactions.
-         // A more accurate way involves periodic snapshots or complex calculations.
-         // For this project, maybe return the last N transactions or just use Wallet/Currency data.
-         // Returning empty for now as it's non-trivial.
+         // C'est compliqué ça. Faut sommer la valeur des actifs à différents moments.
+         // Pour simplifier, on pourrait juste retourner les dernières transactions.
+         // Ou utiliser les données Wallet/Currency.
+         // Je retourne un truc vide pour l'instant.
         return ['labels' => [], 'values' => []];
     }
 
     /**
-     * Calculates the FIFO cost basis for the currently held quantity of a specific currency.
+     * Je calcule le coût de base FIFO pour la quantité actuelle d'une devise.
      *
-     * @param int $userId The user's ID.
-     * @param int $currencyId The currency's ID.
-     * @return float The total cost basis in CAD for the currently held assets.
+     * @param int $userId ID de l'utilisateur.
+     * @param int $currencyId ID de la devise.
+     * @return float Le coût de base total en CAD pour les actifs détenus.
      */
     public function calculateCurrentFIFOBaseCost(int $userId, int $currencyId): float {
-        // 1. Fetch all BUY transactions for this user/currency, ordered oldest first
+        // 1. Je prends toutes les transactions d'ACHAT (les plus vieilles d'abord)
         $buySql = "SELECT quantity, total_amount_cad FROM transactions
                    WHERE user_id = :user_id AND currency_id = :currency_id AND type = 'buy'
                    ORDER BY timestamp ASC";
@@ -82,7 +86,7 @@ class Transaction {
         $buyStmt->execute();
         $buyTransactions = $buyStmt->fetchAll();
 
-        // 2. Fetch all SELL transactions for this user/currency, ordered oldest first
+        // 2. Je prends toutes les transactions de VENTE (les plus vieilles d'abord)
         $sellSql = "SELECT quantity FROM transactions
                     WHERE user_id = :user_id AND currency_id = :currency_id AND type = 'sell'
                     ORDER BY timestamp ASC";
@@ -94,18 +98,18 @@ class Transaction {
 
         $remainingBuys = [];
         foreach ($buyTransactions as $buy) {
-            // Store remaining quantity and cost per unit for each buy lot
+            // Je stocke la quantité restante et le coût par unité pour chaque lot d'achat
             $remainingBuys[] = [
                 'remaining_quantity' => (float)$buy['quantity'],
                 'cost_per_unit' => (float)$buy['quantity'] > 0 ? (float)$buy['total_amount_cad'] / (float)$buy['quantity'] : 0
             ];
         }
 
-        // 3. Simulate sells using FIFO
+        // 3. Je simule les ventes en FIFO
         foreach ($sellTransactions as $sell) {
             $sellQuantity = (float)$sell['quantity'];
-            foreach ($remainingBuys as $key => &$buyLot) { // Use reference to modify array
-                if ($sellQuantity <= 0) break; // This sell is fully accounted for
+            foreach ($remainingBuys as $key => &$buyLot) { // J'utilise une référence pour modifier le tableau
+                if ($sellQuantity <= 0) break; // Cette vente est complètement prise en compte
 
                 if ($buyLot['remaining_quantity'] > 0) {
                     $deductAmount = min($sellQuantity, $buyLot['remaining_quantity']);
@@ -113,10 +117,10 @@ class Transaction {
                     $sellQuantity -= $deductAmount;
                 }
             }
-            unset($buyLot); // Unset reference after loop
+            unset($buyLot); // Je supprime la référence après la boucle
         }
 
-        // 4. Calculate cost basis from remaining buy lots
+        // 4. Je calcule le coût de base à partir des lots d'achat restants
         $totalCostBasis = 0.0;
         foreach ($remainingBuys as $buyLot) {
             if ($buyLot['remaining_quantity'] > 0) {

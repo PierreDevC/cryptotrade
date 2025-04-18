@@ -268,7 +268,14 @@
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                             <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#profileSettingsModal"><i class="fa-solid fa-id-card me-2"></i>Profil et Paramètres</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/cryptotrade/logout"><i class="fa-solid fa-right-from-bracket me-2"></i>Déconnexion</a></li>
+                            <li>
+                                <form id="logoutForm" action="/cryptotrade/logout" method="POST" style="display: none;">
+                                    <input type="hidden" name="<?php echo App\Utils\Csrf::getTokenName(); ?>" value="<?php echo App\Utils\Csrf::getToken(); ?>">
+                                </form>
+                                <a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logoutForm').submit();">
+                                    <i class="fa-solid fa-right-from-bracket me-2"></i>Déconnexion
+                                </a>
+                            </li>
                         </ul>
                 </div></div>
             </div>
@@ -672,6 +679,16 @@
 
     <!-- JavaScript - Use root-relative path -->
     <script src="/cryptotrade/js/dashboard_ajax.js" defer></script>
+
+    <!-- ADDED: Inject CSRF token for AJAX -->
+    <?php require_once __DIR__ . 
+'/app/Utils/Csrf.php'; ?>
+    <script>
+        const CSRF_TOKEN = "<?php echo App\Utils\Csrf::generateToken(); ?>";
+        const CSRF_FIELD_NAME = "<?php echo App\Utils\Csrf::getTokenName(); ?>";
+        // ADDED: Inject BASE_URL
+        const BASE_URL = "<?php echo BASE_URL; ?>";
+    </script>
 
 </body>
 </html>

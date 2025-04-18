@@ -11,6 +11,7 @@ use App\Core\Session;
 use App\Core\Request;
 use App\Utils\AuthGuard;
 use App\Models\User;
+use App\Utils\Csrf;
 use PDO;
 
 class UserController {
@@ -27,6 +28,8 @@ class UserController {
     // Point API: MAJ Profil
     public function updateProfile() {
         AuthGuard::protect(); // Faut être connecté
+        Csrf::protect($this->request);
+
         $userId = AuthGuard::user();
         $body = $this->request->getBody();
 

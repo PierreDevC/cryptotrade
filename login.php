@@ -2,6 +2,8 @@
 // ADDED: Require Session for flash messages
 // Assumes Session.php is within the include path or use absolute path if needed
 require_once __DIR__ . '/app/Core/Session.php';
+// ADDED: Require Csrf to generate token
+require_once __DIR__ . '/app/Utils/Csrf.php';
 ?>
 <!doctype html>
 <html>
@@ -60,6 +62,8 @@ require_once __DIR__ . '/app/Core/Session.php';
                          <?php endif; ?>
 
                     <form method="POST" action="/cryptotrade/login">
+                        <!-- ADDED: CSRF Token Field -->
+                        <input type="hidden" name="<?php echo App\Utils\Csrf::getTokenName(); ?>" value="<?php echo App\Utils\Csrf::generateToken(); ?>">
                         <div class="mb-3">
                             <label for="email" class="form-label">Adresse courriel</label>
                             <input type="email" class="form-control" id="email" name="email" required>

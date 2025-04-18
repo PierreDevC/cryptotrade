@@ -10,6 +10,7 @@ namespace App\Controllers;
 use App\Core\Session;
 use App\Core\Request;
 use App\Models\User;
+use App\Utils\Csrf;
 use PDO;
 
 class AuthController {
@@ -28,6 +29,8 @@ class AuthController {
     // public function showSignup() { require 'signup.html'; }
 
     public function login() {
+        Csrf::protect($this->request);
+
         $body = $this->request->getBody();
         $email = $body['email'] ?? null;
         $password = $body['password'] ?? null;
@@ -64,6 +67,8 @@ class AuthController {
     }
 
     public function signup() {
+        Csrf::protect($this->request);
+
         $body = $this->request->getBody();
         $fullname = $body['fullName'] ?? null; // Correspond au nom du champ dans le formulaire HTML
         $email = $body['email'] ?? null;
@@ -113,6 +118,8 @@ class AuthController {
     }
 
     public function logout() {
+        Csrf::protect($this->request);
+
         Session::destroy();
         header('Location: ' . BASE_URL . '/login');
         exit;

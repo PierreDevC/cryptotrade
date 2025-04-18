@@ -1,6 +1,8 @@
 <?php
 // ADDED: Require Session for flash messages
 require_once __DIR__ . '/app/Core/Session.php';
+// ADDED: Require Csrf to generate token
+require_once __DIR__ . '/app/Utils/Csrf.php';
 ?>
 <!doctype html>
 <html>
@@ -45,6 +47,8 @@ require_once __DIR__ . '/app/Core/Session.php';
                         <?php endif; ?>
 
                     <form method="POST" action="/cryptotrade/signup">
+                        <!-- ADDED: CSRF Token Field -->
+                        <input type="hidden" name="<?php echo App\Utils\Csrf::getTokenName(); ?>" value="<?php echo App\Utils\Csrf::generateToken(); ?>">
                         <div class="mb-3">
                             <label for="fullName" class="form-label">Nom complet</label>
                             <input type="text" class="form-control" id="fullName" name="fullName" required>
