@@ -1,37 +1,42 @@
 <?php
 // /cryptotrade/app/Utils/Logger.php
 namespace App\Utils;
-use App\Core\Session; // To get user ID
+use App\Core\Session; // Pour récupérer l'ID utilisateur
+
+/**
+ * Développeur assignés(s) : Seydina
+ * Entité : Classe 'Logger' de la couche Utils
+ */
 
 class Logger {
-    // Define the path relative to this file's location
+    // Le chemin vers mon fichier de log (relatif à ce fichier)
     private static $logFilePath = __DIR__ . '/../../storage/logs/audit.log';
 
     /**
-     * Logs an action to the audit log file.
+     * J'enregistre une action dans le fichier de log.
      *
-     * @param string $action Short description of the action (e.g., 'login_success', 'buy_crypto').
-     * @param array $details Optional associative array of relevant details (e.g., ['currency_id' => 5, 'quantity' => 0.1]).
+     * @param string $action Description courte (ex: 'login_success', 'buy_crypto').
+     * @param array $details Détails optionnels (ex: ['currency_id' => 5, 'quantity' => 0.1]).
      */
     public static function logAction(string $action, array $details = []) {
-        // Ensure the log directory exists
+        // Je vérifie que le dossier de logs existe
         $logDir = dirname(self::$logFilePath);
         if (!is_dir($logDir)) {
-            // Attempt to create the directory recursively
-            // Suppress errors in case of permission issues, but log them if possible later
+            // J'essaie de le créer si besoin (récursivement)
+            // @ pour ignorer les erreurs de création (permissions)
             @mkdir($logDir, 0775, true);
         }
 
-        // Gather context information
+        // Je récupère le contexte
         $timestamp = date('Y-m-d H:i:s');
-        $userId = Session::get('user_id') ?? 'Guest'; // Default to 'Guest' if no session
+        $userId = Session::get('user_id') ?? 'Guest'; // 'Guest' si pas de session
         $ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'Unknown IP';
         $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown User Agent';
 
-        // Format details into a readable string (JSON is good for structure)
+        // Je formate les détails (en JSON c'est bien)
         $detailsString = !empty($details) ? json_encode($details) : '-';
 
-        // Construct the log message
+        // Je prépare le message de log
         $logMessage = sprintf(
             "[%s] UserID: %s | IP: %s | Action: %s | Details: %s | UserAgent: %s%s",
             $timestamp,
@@ -40,15 +45,15 @@ class Logger {
             $action,
             $detailsString,
             $userAgent,
-            PHP_EOL // Ensures a new line for each entry
+            PHP_EOL // Nouvelle ligne pour chaque entrée
         );
 
-        // Append the message to the log file with exclusive lock
-        // Use error suppression (@) for file_put_contents in case of permission errors
-        // In a production app, more robust error handling/permission checks would be ideal
+        // J'ajoute au fichier de log (avec verrouillage exclusif)
+        // @ pour ignorer les erreurs d'écriture (permissions)
+        // En prod, faudrait mieux gérer les erreurs
         $writeSuccess = @file_put_contents(self::$logFilePath, $logMessage, FILE_APPEND | LOCK_EX);
 
-        // Optional: Log an error if writing failed (e.g., to PHP error log)
+        // Optionnel : je log une erreur si l'écriture a échoué (ex: dans les logs PHP)
         if ($writeSuccess === false) {
             error_log("Logger Error: Failed to write to audit log file: " . self::$logFilePath . " - Check permissions.");
         }

@@ -2,6 +2,11 @@
 // /cryptotrade/app/Core/Session.php
 namespace App\Core;
 
+/**
+ * Développeur assignés(s) : Pierre
+ * Entité : Classe 'Session' de la couche Core
+ */
+
 class Session {
     public static function init() {
         if (session_status() == PHP_SESSION_NONE) {
@@ -31,7 +36,7 @@ class Session {
         session_destroy();
     }
 
-    // Optional: Flash messages (show once then remove)
+    // Pour les messages flash (affichés une fois)
     public static function flash($key, $message = null) {
         if ($message !== null) {
             self::set('flash_' . $key, $message);
@@ -43,6 +48,6 @@ class Session {
         return null;
     }
 }
-// Initialize session when this file is included
+// J'initialise la session direct
 Session::init();
 ?>

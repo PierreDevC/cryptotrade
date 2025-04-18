@@ -2,6 +2,11 @@
 // /cryptotrade/app/Core/Router.php
 namespace App\Core;
 
+/**
+ * Développeur assignés(s) : Pierre
+ * Entité : Classe 'Router' de la couche Core
+ */
+
 class Router {
     protected $routes = [
         'GET' => [],
@@ -44,22 +49,22 @@ class Router {
 
         foreach ($this->routes[$method] as $routeUri => $controllerAction) {
             $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '([a-zA-Z0-9_]+)', $routeUri);
-            $pattern = '#^' . $pattern . '$#'; // Add start/end anchors
+            $pattern = '#^' . $pattern . '$#'; // J'ajoute les ancres de début/fin
 
             if (preg_match($pattern, $uri, $matches)) {
-                // Check if the route definition had parameters
+                // Je vérifie si la route attendait des paramètres
                 preg_match_all('/\{([a-zA-Z0-9_]+)\}/', $routeUri, $paramNames);
 
-                // Remove full match ($matches[0])
+                // J'enlève la correspondance complète ($matches[0])
                 array_shift($matches);
 
-                // Map matched values to parameter names
+                // J'associe les valeurs trouvées aux noms des paramètres
                 if (!empty($paramNames[1])) {
                    if(count($matches) == count($paramNames[1])) {
                         $params = array_combine($paramNames[1], $matches);
                    } else {
-                       // Handle mismatch if necessary, maybe log an error
-                       continue; // Or skip this route
+                       // Si ça colle pas, je pourrais loguer une erreur
+                       continue; // Ou je zappe cette route
                    }
                 } else {
                      $params = [];
@@ -67,7 +72,7 @@ class Router {
 
 
                 $matchedRoute = $controllerAction;
-                break; // Found a match, stop searching
+                break; // Trouvé, j'arrête de chercher
             }
         }
 
@@ -81,29 +86,29 @@ class Router {
 
     protected function callAction($controllerAction, $params = []) {
          if (is_callable($controllerAction)) {
-            // It's a closure
+            // C'est une closure
             call_user_func_array($controllerAction, $params);
         } elseif (is_string($controllerAction) && strpos($controllerAction, '@') !== false) {
-             // It's 'Controller@method'
+             // C'est 'Controller@method'
              list($controller, $method) = explode('@', $controllerAction);
 
-             // Basic check if class exists
+             // Petite vérif si la classe existe
              if (!class_exists($controller)) {
                  error_log("Controller class not found: {$controller}");
-                 $this->handleNotFound(); // Or a server error
+                 $this->handleNotFound(); // Ou une erreur serveur
                  return;
              }
 
-             $controllerInstance = new $controller(Database::getInstance()->getConnection()); // Inject DB connection
+             $controllerInstance = new $controller(Database::getInstance()->getConnection()); // J'injecte la connexion BDD
 
-             // Basic check if method exists
+             // Petite vérif si la méthode existe
              if (!method_exists($controllerInstance, $method)) {
                  error_log("Method not found: {$controller}@{$method}");
-                 $this->handleNotFound(); // Or a server error
+                 $this->handleNotFound(); // Ou une erreur serveur
                  return;
              }
 
-             // Call the controller method, passing parameters
+             // J'appelle la méthode du contrôleur avec les params
              call_user_func_array([$controllerInstance, $method], [$params]);
 
          } else {
@@ -114,7 +119,7 @@ class Router {
 
     protected function handleNotFound() {
         http_response_code(404);
-        // You could render a nice 404 page here
+        // Ici, je pourrais afficher une jolie page 404
         echo "404 Not Found";
         exit;
     }

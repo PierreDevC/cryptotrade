@@ -1,29 +1,34 @@
-// ADDED: Debug log to check global CSRF variables
+/**
+ * Développeur assignés(s) :
+ * Entité : Classe 'Admin' de la couche Models
+ */
+
+// Ajouté: Log pour vérifier mes variables globales CSRF
 console.log("CSRF Check:", { token: typeof CSRF_TOKEN !== 'undefined' ? CSRF_TOKEN : 'NOT DEFINED', fieldName: typeof CSRF_FIELD_NAME !== 'undefined' ? CSRF_FIELD_NAME : 'NOT DEFINED' });
 
-// Global Constants (from PHP - ensure they are defined before this script)
-// const CSRF_TOKEN = \"...\"; // Example, will be injected by PHP
-// const CSRF_FIELD_NAME = \"_csrf_token\"; // Example
-// const BASE_URL = \"http://localhost/cryptotrade\"; // Example, injected by PHP
+// Constantes globales (via PHP - elles doivent être définies avant)
+// const CSRF_TOKEN = \"...\"; // Exemple, injecté par PHP
+// const CSRF_FIELD_NAME = \"_csrf_token\"; // Exemple
+// const BASE_URL = \"http://localhost/cryptotrade\"; // Exemple, injecté par PHP
 
-// Base URL for API calls (can be dynamic based on environment)
-// const API_BASE_URL = \"/cryptotrade/api\"; // CHANGED: Use absolute URL
-const API_BASE_URL = `${BASE_URL}/api`; // Use the injected BASE_URL
+// URL de base pour les appels API
+// const API_BASE_URL = \"/cryptotrade/api\"; // Changé : j'utilise l'URL absolue
+const API_BASE_URL = `${BASE_URL}/api`; // J'utilise le BASE_URL injecté
 
-// Chart instances (to manage updates/destruction)
+// Instances de graphiques (pour gérer les mises à jour/destruction)
 let portfolioChartInstance = null;
 
-// ADDED: fetchWithCsrf function definition
+// Ajouté : Définition de la fonction fetchWithCsrf
 /**
- * NEW: Wrapper for fetch requests to automatically include CSRF token in body for POST/DELETE.
- * Handles JSON parsing and basic error handling.
+ * Nouveau : Wrapper pour fetch qui ajoute le token CSRF au body pour POST/DELETE.
+ * Gère le parsing JSON et les erreurs de base.
  */
 async function fetchWithCsrf(url, options = {}) {
     const method = options.method ? options.method.toUpperCase() : 'GET';
 
-    // Add CSRF token to body for state-changing requests
+    // J'ajoute le token CSRF pour les requêtes qui modifient l'état
     if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
-        // Ensure body exists and is an object or FormData
+        // Je vérifie que le body existe et est un objet ou FormData
         let bodyData;
         if (options.body instanceof FormData) {
             bodyData = options.body;
@@ -31,27 +36,27 @@ async function fetchWithCsrf(url, options = {}) {
             try {
                 bodyData = JSON.parse(options.body);
             } catch (e) {
-                console.error('Could not parse options.body as JSON. Ensure it\'s a valid JSON string or an object/FormData.');
-                bodyData = {}; // Fallback to an empty object
+                console.error('Impossible de parser options.body en JSON. Assurez-vous que c\'est une chaîne JSON valide ou un objet/FormData.');
+                bodyData = {}; // Fallback à un objet vide
             }
         } else {
             bodyData = options.body || {};
         }
 
-        // Add CSRF token
+        // J'ajoute le token CSRF
         if (bodyData instanceof FormData) {
             bodyData.append(CSRF_FIELD_NAME, CSRF_TOKEN);
         } else {
-             // Assume it's a plain object for JSON stringify later
+             // Je suppose que c'est un objet simple pour JSON.stringify
             bodyData[CSRF_FIELD_NAME] = CSRF_TOKEN;
         }
 
-        // Re-assign the modified body
-        // If it was FormData, keep it as FormData
-        // Otherwise, stringify the object for JSON
+        // Je réassigne le body modifié
+        // Si c'était FormData, je le garde en FormData
+        // Sinon, je stringify l'objet pour JSON
         if (!(bodyData instanceof FormData)) {
             options.body = JSON.stringify(bodyData);
-            // Ensure Content-Type is set for JSON
+            // Je m'assure que Content-Type est défini pour JSON
             if (!options.headers) {
                 options.headers = {};
             }
@@ -64,40 +69,40 @@ async function fetchWithCsrf(url, options = {}) {
     try {
         const response = await fetch(url, options);
         if (!response.ok) {
-            // Try to parse error message from JSON response
-            let errorData = { message: `HTTP error! Status: ${response.status}` };
+            // J'essaie de parser le message d'erreur JSON
+            let errorData = { message: `Erreur HTTP ! Statut: ${response.status}` };
             try {
                 const errorJson = await response.json();
                 if (errorJson && errorJson.message) {
                     errorData.message = errorJson.message;
                 }
             } catch (e) {
-                // Ignore if response is not JSON
+                // J'ignore si la réponse n'est pas JSON
             }
-            // Log the error with more context
-             console.error(`Fetch error for ${url}: ${response.status} - ${errorData.message}`);
-             // Add the status code to the error object for more specific handling
+            // Je log l'erreur avec plus de contexte
+             console.error(`Erreur Fetch pour ${url}: ${response.status} - ${errorData.message}`);
+             // J'ajoute le code de statut à l'objet d'erreur pour une gestion plus spécifique
              errorData.statusCode = response.status;
             throw new Error(errorData.message, { cause: errorData });
         }
-        // Handle no content responses (e.g., successful DELETE)
+        // Je gère les réponses sans contenu (ex: DELETE réussi)
         if (response.status === 204) {
-            return { success: true }; // Or return null/undefined based on convention
+            return { success: true }; // Ou null/undefined selon la convention
         }
         return await response.json();
     } catch (error) {
-        console.error('Fetch Error:', error);
-        // Re-throw the error to be caught by the calling function
-        // Include the status code if available from the fetch error cause
+        console.error('Erreur Fetch :', error);
+        // Je relance l'erreur pour qu'elle soit attrapée par la fonction appelante
+        // J'inclus le code de statut si dispo dans la cause de l'erreur fetch
         const statusCode = error.cause?.statusCode;
         throw new Error(error.message, { cause: { statusCode } });
     }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    const API_BASE_URL = `${BASE_URL}/api`; // Use the injected BASE_URL
+    const API_BASE_URL = `${BASE_URL}/api`; // J'utilise le BASE_URL injecté
 
-    // --- Selectors ---
+    // --- Sélecteurs ---
     const accountTypeEl = document.querySelector('.account-type');
     const accountStatusEl = document.querySelector('.account-status');
     const accountLastLoginEl = document.getElementById('lastLoginValue');
@@ -128,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const tradeInfoEl = document.getElementById('tradeInfo');
     const tradeInfoTextEl = document.getElementById('tradeInfoText');
 
-    // --- Modal Trade Form Selectors ---
+    // --- Sélecteurs Formulaire Trade Modale ---
     const modalCryptoAmountInput = document.getElementById('modalCryptoAmount');
     const modalCryptoQuantityInput = document.getElementById('modalCryptoQuantity');
     const modalBuyButton = document.getElementById('modalBuyButton');
@@ -137,12 +142,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalTradeInfoEl = document.getElementById('modalTradeInfo');
     const modalTradeInfoTextEl = document.getElementById('modalTradeInfoText');
 
-    // --- Modal Info Placeholders ---
+    // --- Placeholders Infos Modale ---
     const modalInfoPriceEl = document.getElementById('modalInfoPrice');
     const modalInfoChangeEl = document.getElementById('modalInfoChange');
     const modalInfoMarketCapEl = document.getElementById('modalInfoMarketCap');
 
-    // --- Admin Currency Management Selectors (NEW) ---
+    // --- Sélecteurs Gestion Devises Admin (Nouveau) ---
     const adminCurrencySection = document.getElementById('adminCurrencyManagementSection');
     const adminCurrencySelect = document.getElementById('adminSelectCurrency');
     const adminCurrencyForm = document.getElementById('adminCurrencyForm');
@@ -159,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const adminDeleteBtn = document.getElementById('adminDeleteCurrencyBtn');
     const adminMessageArea = document.getElementById('adminCurrencyMessage');
 
-    // Confirmation Modal Selectors
+    // Sélecteurs Modale Confirmation
     const confirmationModalEl = document.getElementById('confirmationModal');
     const confirmationModal = confirmationModalEl ? new bootstrap.Modal(confirmationModalEl) : null;
     const confirmActionEl = document.getElementById('confirmAction');
@@ -171,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const confirmErrorEl = document.getElementById('confirmationError');
     const confirmTransactionBtn = document.getElementById('confirmTransactionBtn');
 
-    // --- User Profile Settings Selectors (NEW) ---
+    // --- Sélecteurs Paramètres Profil User (Nouveau) ---
     const profileSettingsModalEl = document.getElementById('profileSettingsModal');
     const userProfileForm = document.getElementById('userProfileForm');
     const profileFullnameInput = document.getElementById('profileFullname');
@@ -182,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const saveProfileButton = document.getElementById('saveProfileButton');
     const userProfileMessageArea = document.getElementById('userProfileMessage');
 
-    // --- NEW: Statistics Tab Selectors ---
+    // --- Nouveau : Sélecteurs Onglet Statistiques ---
     const statsUnrealizedPLEl = document.getElementById('statsUnrealizedPL');
     const profileStatsTabBtn = document.getElementById('profile-stats-tab');
     const statsTotalCryptoValueEl = document.getElementById('statsTotalCryptoValue');
@@ -193,12 +198,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const statsAllocationEmptyEl = document.getElementById('statsAllocationEmpty');
     const downloadAllocationChartBtn = document.getElementById('downloadAllocationChartBtn');
 
-    // --- Transaction History Selectors (NEW) ---
+    // --- Sélecteurs Historique Transactions (Nouveau) ---
     const transactionHistoryTableBody = document.getElementById('transactionHistoryTableBody');
     const downloadCsvBtn = document.getElementById('downloadCsvBtn');
     const downloadPdfBtn = document.getElementById('downloadPdfBtn');
 
-    // --- NEW: Navbar Links & Target Cards for Effects ---
+    // --- Nouveau : Liens Navbar & Cartes Cibles pour Effets ---
     const navLinkCryptos = document.getElementById('nav-link-cryptos');
     const navLinkHoldings = document.getElementById('nav-link-holdings');
     const navLinkTransactions = document.getElementById('nav-link-transactions');
@@ -206,13 +211,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const holdingsCard = document.getElementById('holdings-card');
     const profileHistoryTabBtn = document.getElementById('profile-history-tab');
 
-    // --- NEW: Account Detail Buttons ---
+    // --- Nouveau : Boutons Détails Compte ---
     const viewTransactionsBtn = document.getElementById('viewTransactionsBtn');
     const accountSettingsBtn = document.getElementById('accountSettingsBtn');
     const profileUserTabBtn = document.getElementById('profile-user-tab');
     const viewStatsBtn = document.getElementById('viewStatsBtn');
 
-    // --- NEW: Dark Mode Selectors ---
+    // --- Nouveau : Sélecteurs Mode Sombre ---
     const darkModeSwitch = document.getElementById('darkModeSwitch');
     const darkModeIcon = document.getElementById('darkModeIcon');
     const htmlElement = document.documentElement;
@@ -224,13 +229,13 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentUserEmail = '';
     let userHoldings = {};
 
-    // --- Chart Instances ---
+    // --- Instances de Graphiques ---
     let portfolioChart = null;
     let cryptoListChartInstances = {};
     let modalChartInstance = null;
-    let allocationChart = null; // NEW: Chart instance for allocation
+    let allocationChart = null; // Nouveau : Instance pour graphique d'allocation
 
-    // --- Store context for the confirmation modal ---
+    // --- Stocke le contexte pour la modale de confirmation ---
     let currentChartFetchController = null;
     let confirmationContext = {
         action: '',
@@ -239,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function() {
         amountCad: 0
     };
 
-    // --- Dark Mode Logic ---
+    // --- Logique Mode Sombre ---
     const THEME_KEY = 'themePreference';
     function applyTheme(theme, redrawCharts = false) {
         if (theme === 'dark') {
@@ -267,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
         darkModeSwitch.addEventListener('change', toggleTheme);
     }
 
-    // --- Helper Functions ---
+    // --- Fonctions Utilitaires ---
     function formatCurrency(value, currency = 'CAD') {
         if (typeof value !== 'number' || isNaN(value)) return 'N/A';
         return new Intl.NumberFormat('fr-CA', { style: 'currency', currency: currency }).format(value);
@@ -279,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return 'text-muted';
     }
 
-    // --- REFACTORED Update Trade Form Logic ---
+    // --- Refactoré : Logique MàJ Formulaire Trade ---
     function updateCorrespondingTradeInput(source, sourceInput, targetInput, priceCad, buyBtn, sellBtn, infoEl) {
         if (!sourceInput || !targetInput || !priceCad || priceCad <= 0) {
             if(buyBtn) buyBtn.disabled = true;
@@ -318,12 +323,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (infoEl) infoEl.classList.add('d-none');
     }
 
-    // --- REFACTORED Confirmation Modal Trigger ---
+    // --- Refactoré : Déclencheur Modale Confirmation ---
     function showConfirmationModal(action, crypto, quantity, amountCad, sourceInfoEl = null) {
         const sourceInfoTextEl = sourceInfoEl ? sourceInfoEl.querySelector('span') : null;
 
         function displayValidationError(message) {
-            console.warn(`Validation Error (${action}): ${message}`);
+            console.warn(`Erreur Validation (${action}): ${message}`);
             if (sourceInfoEl && sourceInfoTextEl) {
                 sourceInfoTextEl.textContent = message;
                 sourceInfoEl.className = 'alert alert-danger mt-3';
@@ -371,14 +376,14 @@ document.addEventListener('DOMContentLoaded', function() {
         confirmationModal.show();
     }
 
-    // --- Transaction Execution --- (Uses confirmationContext)
+    // --- Exécution Transaction --- (utilise confirmationContext)
     async function executeTransaction() {
         if (!confirmTransactionBtn || !confirmErrorEl) return;
 
         const { action, crypto, quantity, amountCad } = confirmationContext;
 
         if (!action || !crypto || !crypto.id || isNaN(quantity) || quantity <= 0 || isNaN(amountCad) || amountCad <= 0) {
-            console.error("Invalid confirmation context:", confirmationContext);
+            console.error("Contexte de confirmation invalide:", confirmationContext);
             confirmErrorEl.textContent = "Erreur interne: Données de confirmation invalides.";
             confirmErrorEl.classList.remove('d-none');
             return;
@@ -425,7 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- Rendering Functions ---
+    // --- Fonctions de Rendu ---
     function renderHoldings(holdings) {
         if (!holdingsTableBody) return;
         userHoldings = {};
@@ -528,7 +533,7 @@ document.addEventListener('DOMContentLoaded', function() {
          try {
              const isDarkMode = htmlElement.getAttribute('data-bs-theme') === 'dark';
              const response = await fetch(`${API_BASE_URL}/crypto/chart/${currencyId}`);
-             if (!response.ok) throw new Error(`Mini chart HTTP error! Status: ${response.status}`);
+             if (!response.ok) throw new Error(`Erreur HTTP mini chart! Statut: ${response.status}`);
              const result = await response.json();
              if (result.success && result.data?.datasets?.[0]?.data) {
                  const ctx = document.getElementById(canvasId)?.getContext('2d');
@@ -540,7 +545,7 @@ document.addEventListener('DOMContentLoaded', function() {
                      options: { responsive: true, maintainAspectRatio: false, scales: { x: { display: false }, y: { display: false } }, plugins: { legend: { display: false }, tooltip: { enabled: false } }, animation: false }
                  });
              }
-         } catch (error) { console.error(`Error fetching mini chart for ${canvasId}:`, error); }
+         } catch (error) { console.error(`Erreur fetch mini chart pour ${canvasId}:`, error); }
      }
 
     function addCryptoListRowListeners() {
@@ -603,40 +608,40 @@ document.addEventListener('DOMContentLoaded', function() {
      }
 
     async function displayChartInModal(modalData) {
-        console.log(`>>> Entering displayChartInModal for ID: ${modalData?.id}`);
+        console.log(`>>> Entrée displayChartInModal pour ID: ${modalData?.id}`);
 
-        // Check all required modal elements exist
+        // Je vérifie que tous les éléments requis de la modale existent
         if (!cryptoChartModalEl || !modalChartLoadingEl || !modalChartContainerEl || !modalChartErrorEl || !modalChartTitleEl || !modalChartCanvas || !modalInfoPriceEl || !modalInfoChangeEl || !modalInfoMarketCapEl || !modalCryptoAmountInput || !modalCryptoQuantityInput || !modalBuyButton || !modalSellButton || !modalSellAllButton || !modalTradeInfoEl)
         {
              console.error("Un ou plusieurs éléments de la modale étendue sont manquants.");
              return;
         }
 
-        // --- Force Cleanup & Reset State FIRST ---
+        // --- Je force le nettoyage & la réinitialisation de l'état D'ABORD ---
         if (modalChartInstance) {
-            console.log("   -> Destroying previous modal chart instance.");
+            console.log("   -> Destruction de l'instance de graphique modale précédente.");
             modalChartInstance.destroy();
             modalChartInstance = null;
         }
-        // Abort any pending fetch request for the *previous* chart
+        // J'annule toute requête fetch en attente pour le graphique *précédent*
         if (currentChartFetchController) {
-            console.log("   -> Aborting previous chart fetch request.");
+            console.log("   -> Annulation de la requête fetch du graphique précédent.");
             currentChartFetchController.abort();
         }
 
-        console.log("   -> Resetting modal DOM elements (show loading, hide chart/error).");
+        console.log("   -> Réinitialisation des éléments DOM de la modale (affiche chargement, masque graphique/erreur).");
         modalChartLoadingEl.classList.remove('d-none');
         modalChartContainerEl.classList.add('d-none');
         modalChartCanvas.classList.add('d-none');
         modalChartErrorEl.classList.add('d-none');
-        // --- End Cleanup & Reset ---
+        // --- Fin Nettoyage & Réinitialisation ---
 
         const { id: currencyId, name: cryptoName, symbol: cryptoSymbol, priceCad, changePercent, marketCap } = modalData;
 
-        // Prepare modal state
+        // Je prépare l'état de la modale
         modalChartTitleEl.textContent = `Graphique : ${cryptoName || ''} (${cryptoSymbol || ''})`;
 
-        // --- Populate Info Section --- (Do this *before* fetching chart)
+        // --- Je remplis la section Infos --- (Avant de fetch le graphique)
         modalInfoPriceEl.textContent = formatCurrency(priceCad);
         const changeClass = getChangeClass(changePercent);
         modalInfoChangeEl.innerHTML = `<span class="${changeClass}">${changePercent.toFixed(2)}%</span>`;
@@ -650,9 +655,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const ownedQuantity = userHoldings[currencyId] || 0;
         modalSellAllButton.disabled = !(ownedQuantity && ownedQuantity > 0);
 
-        // --- Setup Listeners (using cloning to prevent duplicates) --- 
+        // --- J'installe les Listeners (en clonant pour éviter les doublons) --- 
         const setupModalListeners = () => {
-            console.log("   -> setupModalListeners: Re-selecting modal trade elements...");
+            console.log("   -> setupModalListeners: Re-sélection des éléments de trade de la modale...");
             const amountInputToReplace = document.getElementById('modalCryptoAmount');
             const quantityInputToReplace = document.getElementById('modalCryptoQuantity');
             const buyButtonToReplace = document.getElementById('modalBuyButton');
@@ -660,30 +665,30 @@ document.addEventListener('DOMContentLoaded', function() {
             const sellAllButtonToReplace = document.getElementById('modalSellAllButton');
             const infoElementForListeners = document.getElementById('modalTradeInfo');
 
-            // Check if elements were found *now*
+            // Je vérifie si les éléments ont été trouvés *maintenant*
             if (!amountInputToReplace || !quantityInputToReplace || !buyButtonToReplace || !sellButtonToReplace || !sellAllButtonToReplace || !infoElementForListeners) {
-                console.error("   -> ERROR in setupModalListeners: One or more modal trade elements not found before cloning!");
-                return; // Stop if elements are missing
+                console.error("   -> ERREUR dans setupModalListeners: Un ou plusieurs éléments de trade de la modale non trouvés avant le clonage !");
+                return; // J'arrête si des éléments manquent
             }
-            console.log("   -> setupModalListeners: All elements found.");
+            console.log("   -> setupModalListeners: Tous les éléments trouvés.");
 
-            // Clone elements to remove old listeners
+            // Je clone les éléments pour enlever les anciens listeners
             const freshAmountInput = amountInputToReplace.cloneNode(true);
             const freshQuantityInput = quantityInputToReplace.cloneNode(true);
             const freshBuyButton = buyButtonToReplace.cloneNode(true);
             const freshSellButton = sellButtonToReplace.cloneNode(true);
             const freshSellAllButton = sellAllButtonToReplace.cloneNode(true);
 
-            console.log("   -> setupModalListeners: Replacing elements with clones...");
+            console.log("   -> setupModalListeners: Remplacement des éléments par les clones...");
             amountInputToReplace.parentNode.replaceChild(freshAmountInput, amountInputToReplace);
             quantityInputToReplace.parentNode.replaceChild(freshQuantityInput, quantityInputToReplace);
             buyButtonToReplace.parentNode.replaceChild(freshBuyButton, buyButtonToReplace);
             sellButtonToReplace.parentNode.replaceChild(freshSellButton, sellButtonToReplace);
             sellAllButtonToReplace.parentNode.replaceChild(freshSellAllButton, sellAllButtonToReplace);
 
-            console.log("   -> setupModalListeners: Attaching listeners to cloned elements...");
+            console.log("   -> setupModalListeners: Attachement des listeners aux éléments clonés...");
 
-            // Attach listeners to fresh elements
+            // J'attache les listeners aux nouveaux éléments
             freshAmountInput.addEventListener('input', () => {
                 updateCorrespondingTradeInput('amount', freshAmountInput, freshQuantityInput, modalData.priceCad, freshBuyButton, freshSellButton, infoElementForListeners);
             });
@@ -693,23 +698,23 @@ document.addEventListener('DOMContentLoaded', function() {
             freshBuyButton.addEventListener('click', () => {
                 const quantity = parseFloat(freshQuantityInput.value);
                 const amountCad = parseFloat(freshAmountInput.value);
-                // Hide the current chart modal FIRST
+                // Je masque la modale du graphique actuelle D'ABORD
                 const chartModalInstance = bootstrap.Modal.getInstance(cryptoChartModalEl);
                 if (chartModalInstance) {
                     chartModalInstance.hide();
                 }
-                // THEN show the confirmation modal
+                // ENSUITE j'affiche la modale de confirmation
                 showConfirmationModal('Acheter', modalData, quantity, amountCad, infoElementForListeners);
             });
             freshSellButton.addEventListener('click', () => {
                 const quantity = parseFloat(freshQuantityInput.value);
                 const amountCad = parseFloat(freshAmountInput.value);
-                // Hide the current chart modal FIRST
+                // Je masque la modale du graphique actuelle D'ABORD
                 const chartModalInstance = bootstrap.Modal.getInstance(cryptoChartModalEl);
                 if (chartModalInstance) {
                     chartModalInstance.hide();
                 }
-                // THEN show the confirmation modal
+                // ENSUITE j'affiche la modale de confirmation
                 showConfirmationModal('Vendre', modalData, quantity, amountCad, infoElementForListeners);
             });
             freshSellAllButton.addEventListener('click', () => {
@@ -723,21 +728,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
         setupModalListeners();
 
-        // --- Create AbortController for the new fetch --- 
+        // --- Je crée l'AbortController pour le nouveau fetch --- 
         currentChartFetchController = new AbortController();
         const signal = currentChartFetchController.signal;
 
-        // --- Fetch and Render Chart --- 
-        console.log(`   -> Initiating fetch for chart data (ID: ${currencyId})...`);
+        // --- Fetch et Rendu du Graphique --- 
+        console.log(`   -> Lancement du fetch pour les données du graphique (ID: ${currencyId})...`);
         try {
             const isDarkMode = htmlElement.getAttribute('data-bs-theme') === 'dark';
             if (!currencyId) throw new Error('ID de devise manquant.');
-            const response = await fetch(`${API_BASE_URL}/crypto/chart/${currencyId}`, { signal }); // Pass signal
-            console.log(`   -> Fetch response received (Status: ${response.status})`);
+            const response = await fetch(`${API_BASE_URL}/crypto/chart/${currencyId}`, { signal }); // Je passe le signal
+            console.log(`   -> Réponse Fetch reçue (Statut: ${response.status})`);
             if (!response.ok) throw new Error(`Erreur API (${response.status})`);
             const result = await response.json();
             if (result.success && result.data?.datasets?.[0]?.data) {
-                console.log("   -> API data successful. Preparing to render chart.");
+                console.log("   -> Données API réussies. Préparation du rendu du graphique.");
                 const chartData = result.data;
                 const ctx = modalChartCanvas.getContext('2d');
                 const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
@@ -767,42 +772,42 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
                 modalChartLoadingEl.classList.add('d-none');
-                console.log("   -> Chart rendered. Showing canvas and container.");
-                modalChartCanvas.classList.remove('d-none'); // Show canvas
-                modalChartContainerEl.classList.remove('d-none'); // Show container
+                console.log("   -> Graphique rendu. Affichage du canvas et du conteneur.");
+                modalChartCanvas.classList.remove('d-none'); // J'affiche le canvas
+                modalChartContainerEl.classList.remove('d-none'); // J'affiche le conteneur
                 if(downloadAllocationChartBtn) downloadAllocationChartBtn.disabled = false;
             } else {
-                console.log("   -> API data format invalid or success=false.");
+                console.log("   -> Format des données API invalide ou success=false.");
                 throw new Error(result.message || 'Format de données invalide');
             }
         } catch (error) {
              if (error.name === 'AbortError') {
-                 console.log("   -> Chart fetch aborted (likely due to new modal opening). No error shown.");
+                 console.log("   -> Fetch du graphique annulé (probablement à cause d'une nouvelle ouverture de modale). Aucune erreur affichée.");
              } else {
-                 console.error(`>>> ERREUR fetch/render chart (ID: ${currencyId}):`, error);
+                 console.error(`>>> ERREUR fetch/render graphique (ID: ${currencyId}):`, error);
                  modalChartLoadingEl.classList.add('d-none');
                  modalChartErrorEl.textContent = `Erreur chargement graphique: ${error.message}`;
                  modalChartErrorEl.classList.remove('d-none');
-                 modalChartCanvas.classList.add('d-none'); // Keep canvas hidden on error
+                 modalChartCanvas.classList.add('d-none'); // Je garde le canvas masqué en cas d'erreur
                  if(downloadAllocationChartBtn) downloadAllocationChartBtn.disabled = true;
              }
         }
     }
 
-    // --- NEW: Statistics Tab Functions ---
+    // --- Nouveau : Fonctions Onglet Statistiques ---
     async function fetchAndRenderStats() {
-        console.log(">>> fetchAndRenderStats triggered");
+        console.log(">>> fetchAndRenderStats déclenché");
         if (!allocationChartCanvas || !statsAllocationLoadingEl || !statsAllocationErrorEl || !statsTotalCryptoValueEl || !statsFiatBalanceEl || !statsAllocationEmptyEl || !statsUnrealizedPLEl || !downloadAllocationChartBtn) {
-            console.error("Stats tab elements not found.");
+            console.error("Éléments de l'onglet statistiques non trouvés.");
             return;
         }
 
-        // Reset state
+        // Je réinitialise l'état
         statsAllocationLoadingEl.classList.remove('d-none');
         statsAllocationErrorEl.classList.add('d-none');
         if(downloadAllocationChartBtn) downloadAllocationChartBtn.disabled = true;
         statsAllocationEmptyEl.classList.add('d-none');
-        allocationChartCanvas.style.display = 'none'; // Hide canvas initially
+        allocationChartCanvas.style.display = 'none'; // Je masque le canvas initialement
         if (allocationChart) {
             allocationChart.destroy();
             allocationChart = null;
@@ -814,14 +819,14 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await fetch(`${API_BASE_URL}/stats/allocation`);
             if (!response.ok) {
-                throw new Error(`API Error: ${response.status}`);
+                throw new Error(`Erreur API: ${response.status}`);
             }
             const result = await response.json();
 
             if (result.success && result.data) {
                 const statsData = result.data;
 
-                // Update summary cards
+                // Je mets à jour les cartes résumé
                 if (statsTotalCryptoValueEl) statsTotalCryptoValueEl.textContent = formatCurrency(statsData.total_crypto_value_cad);
                 if (statsFiatBalanceEl) statsFiatBalanceEl.textContent = formatCurrency(statsData.user_balance_cad);
                 if (statsUnrealizedPLEl) {
@@ -837,13 +842,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
 
-                // Prepare chart data
+                // Je prépare les données du graphique
                 const allocation = statsData.allocation || [];
                 if (allocation.length === 0) {
                     statsAllocationEmptyEl.classList.remove('d-none');
                     statsAllocationLoadingEl.classList.add('d-none');
                     if(downloadAllocationChartBtn) downloadAllocationChartBtn.disabled = true;
-                    return; // No data to chart
+                    return; // Pas de données à afficher
                 }
 
                 const labels = allocation.map(item => item.symbol);
@@ -854,7 +859,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     datasets: [{
                         label: 'Répartition (%)',
                         data: dataValues,
-                        // Add nice background colors (can be generated dynamically later)
+                        // J'ajoute de jolies couleurs de fond (peut être généré dynamiquement plus tard)
                         backgroundColor: [
                             'rgba(255, 99, 132, 0.7)',
                             'rgba(54, 162, 235, 0.7)',
@@ -862,19 +867,19 @@ document.addEventListener('DOMContentLoaded', function() {
                             'rgba(75, 192, 192, 0.7)',
                             'rgba(153, 102, 255, 0.7)',
                             'rgba(255, 159, 64, 0.7)',
-                            'rgba(99, 255, 132, 0.7)', // More colors if needed
+                            'rgba(99, 255, 132, 0.7)', // Plus de couleurs si besoin
                             'rgba(235, 54, 162, 0.7)',
                             'rgba(86, 255, 206, 0.7)',
                             'rgba(192, 75, 192, 0.7)'
                         ],
-                        borderColor: htmlElement.getAttribute('data-bs-theme') === 'dark' ? '#333' : '#fff', // Border color based on theme
+                        borderColor: htmlElement.getAttribute('data-bs-theme') === 'dark' ? '#333' : '#fff', // Couleur bordure selon thème
                         borderWidth: 1
                     }]
                 };
 
                 const ctx = allocationChartCanvas.getContext('2d');
                 allocationChart = new Chart(ctx, {
-                    type: 'doughnut', // Or 'pie'
+                    type: 'doughnut', // Ou 'pie'
                     data: chartConfigData,
                     options: {
                         responsive: true,
@@ -883,7 +888,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             legend: {
                                 position: 'top',
                                 labels: {
-                                     color: htmlElement.getAttribute('data-bs-theme') === 'dark' ? '#fff' : '#666' // Legend color based on theme
+                                     color: htmlElement.getAttribute('data-bs-theme') === 'dark' ? '#fff' : '#666' // Couleur légende selon thème
                                 }
                             },
                             tooltip: {
@@ -894,7 +899,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                             label += ': ';
                                         }
                                         if (context.parsed !== null) {
-                                            // Find the original allocation item to show name and CAD value
+                                            // Je trouve l'élément d'allocation original pour afficher nom et valeur CAD
                                             const symbol = context.label;
                                             const item = allocation.find(a => a.symbol === symbol);
                                             label += `${context.parsed.toFixed(2)}%`;
@@ -910,15 +915,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
 
-                allocationChartCanvas.style.display = 'block'; // Show canvas
+                allocationChartCanvas.style.display = 'block'; // J'affiche le canvas
                 if(downloadAllocationChartBtn) downloadAllocationChartBtn.disabled = false;
 
             } else {
-                throw new Error(result.message || 'Failed to process stats data');
+                throw new Error(result.message || 'Échec traitement données stats');
             }
 
         } catch (error) {
-            console.error("Error fetching/rendering stats:", error);
+            console.error("Erreur fetch/render stats:", error);
             if(downloadAllocationChartBtn) downloadAllocationChartBtn.disabled = true;
             statsAllocationErrorEl.classList.remove('d-none');
         } finally {
@@ -926,9 +931,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- End NEW Statistics Tab Functions ---
+    // --- Fin Nouveau Fonctions Onglet Statistiques ---
 
-    // --- Main Fetch Function ---
+    // --- Fonction Fetch Principale ---
     async function fetchDashboardData() {
         if(holdingsTableBody) holdingsTableBody.innerHTML = '<tr class="loading-placeholder"><td colspan="5">Chargement des actifs... <i class="fas fa-spinner fa-spin"></i></td></tr>';
         if(cryptoListTableBody) cryptoListTableBody.innerHTML = '<tr class="loading-placeholder"><td colspan="8">Chargement des cryptomonnaies... <i class="fas fa-spinner fa-spin"></i></td></tr>';
@@ -977,10 +982,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (holdingsTableBody) renderHoldings(data.holdings);
                     if (data.portfolioChart) renderPortfolioChart(data.portfolioChart);
                 } else {
-                    console.error('Dashboard API data processing failed:', resultDash.message || 'Unknown error');
+                    console.error('Échec traitement données API Dashboard:', resultDash.message || 'Erreur inconnue');
                 }
             } else {
-                 console.error(`Dashboard API error! status: ${dashResponse.status}`);
+                 console.error(`Erreur API Dashboard! statut: ${dashResponse.status}`);
             }
 
             if (listResponse.ok) {
@@ -988,20 +993,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (resultList.success && resultList.data) {
                     if (cryptoListTableBody) renderCryptoList(resultList.data);
                 } else {
-                    console.error('Crypto List API data processing failed:', resultList.message || 'Unknown error');
+                    console.error('Échec traitement données API Liste Crypto:', resultList.message || 'Erreur inconnue');
                     if (cryptoListTableBody) cryptoListTableBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Erreur chargement cryptos.</td></tr>';
                 }
             } else {
-                console.error(`Crypto List API error! status: ${listResponse.status}`);
+                console.error(`Erreur API Liste Crypto! statut: ${listResponse.status}`);
                 if (cryptoListTableBody) cryptoListTableBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Erreur chargement cryptos.</td></tr>';
             }
 
         } catch (error) {
-            console.error('Error fetching dashboard data:', error);
+            console.error('Erreur fetch données dashboard:', error);
         }
     }
 
-    // --- Event Listeners ---
+    // --- Écouteurs d'Événements ---
     if (toggleBalanceBtn && balanceAmountEl && hiddenBalanceEl) {
         toggleBalanceBtn.addEventListener('click', () => {
             balanceVisible = !balanceVisible;
@@ -1027,12 +1032,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
                 displayChartInModal(modalData);
             } else {
-                console.warn("Modal opened without valid crypto data trigger button.");
+                console.warn("Modale ouverte sans bouton déclencheur valide de données crypto.");
             }
         });
 
         cryptoChartModalEl.addEventListener('hidden.bs.modal', function () {
-            // NO chart destruction here. It's handled at the start of displayChartInModal.
+            // PAS de destruction de graphique ici. Géré au début de displayChartInModal.
         });
     }
 
@@ -1068,7 +1073,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (sellAllButton && quantityInput && amountInput) {
         sellAllButton.addEventListener('click', function() {
             if (!selectedCryptoForTrade) {
-                console.warn('Sell All (Main): No crypto selected.'); return;
+                console.warn('Vendre Tout (Principal): Aucune crypto sélectionnée.'); return;
             }
             const ownedQuantity = userHoldings[selectedCryptoForTrade.id] || 0;
             if (ownedQuantity > 0) {
@@ -1138,7 +1143,7 @@ document.addEventListener('DOMContentLoaded', function() {
             await fetchDashboardData();
 
         } catch (error) {
-            console.error('Error adding currency:', error);
+            console.error('Erreur ajout devise:', error);
             displayAdminCurrencyMessage(`Erreur ajout: ${error.message}`, true);
         } finally {
             this.disabled = false;
@@ -1182,7 +1187,7 @@ document.addEventListener('DOMContentLoaded', function() {
              await fetchDashboardData();
 
          } catch (error) {
-             console.error('Error updating currency:', error);
+             console.error('Erreur MàJ devise:', error);
              displayAdminCurrencyMessage(`Erreur MàJ: ${error.message}`, true);
          } finally {
              this.disabled = false;
@@ -1213,7 +1218,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 await fetchDashboardData();
 
             } catch (error) {
-                console.error('Error deleting currency:', error);
+                console.error('Erreur suppression devise:', error);
                 displayAdminCurrencyMessage(`Erreur suppression: ${error.message}`, true);
             } finally {
                 this.disabled = false;
@@ -1235,7 +1240,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetchAndRenderTransactions();
 
         if (adminCurrencySelect && adminCurrencySelect.value !== 'new') {
-             // Optionally reset admin form or leave as is depending on desired UX
+             // Optionnel : réinitialise le formulaire admin ou laisse tel quel selon l'UX voulue
             // clearAdminCurrencyForm();
             // adminCurrencySelect.value = 'new';
         }
@@ -1292,7 +1297,7 @@ document.addEventListener('DOMContentLoaded', function() {
              }
 
         } catch (error) {
-            console.error('Error updating profile:', error);
+            console.error('Erreur MàJ profil:', error);
             displayUserProfileMessage(`Erreur mise à jour profil: ${error.message}`, true);
         } finally {
             if (saveProfileButton) {
@@ -1351,10 +1356,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     downloadPdfBtn.disabled = false;
                 }
             } else {
-                throw new Error(result.message || 'Failed to load transactions');
+                throw new Error(result.message || 'Échec chargement transactions');
             }
         } catch (error) {
-            console.error('Error fetching transactions:', error);
+            console.error('Erreur fetch transactions:', error);
             transactionHistoryTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Erreur: ${error.message}</td></tr>`;
         }
     }
@@ -1410,7 +1415,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (profileModalInstance && historyTabInstance) {
                 historyTabInstance.show();
             } else {
-                console.error('Could not get modal or tab instance for Transactions link.');
+                console.error('Impossible d\'obtenir l\'instance de modale ou d\'onglet pour le lien Transactions.');
             }
         });
     }
@@ -1433,14 +1438,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- NEW: Listener for Stats Tab Activation ---
+    // --- Nouveau : Listener pour Activation Onglet Stats ---
     if (profileStatsTabBtn) {
         profileStatsTabBtn.addEventListener('shown.bs.tab', function (event) {
-            fetchAndRenderStats(); // Fetch and render stats when the tab is shown
+            fetchAndRenderStats(); // Je fetch et rends les stats quand l'onglet est affiché
         });
     }
 
-    // --- NEW: Listener for Allocation Chart Download Button ---
+    // --- Nouveau : Listener pour Bouton Téléchargement Graphique Allocation ---
     if (downloadAllocationChartBtn) {
         downloadAllocationChartBtn.addEventListener('click', () => {
             if (allocationChart) {
@@ -1448,18 +1453,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 const link = document.createElement('a');
                 link.href = url;
                 link.download = 'cryptotrade-repartition-actifs.png';
-                document.body.appendChild(link); // Required for Firefox
+                document.body.appendChild(link); // Requis pour Firefox
                 link.click();
                 document.body.removeChild(link);
             } else {
-                console.error("Allocation chart instance not found for download.");
+                console.error("Instance du graphique d'allocation non trouvée pour le téléchargement.");
             }
         });
     }
 
     if (viewStatsBtn && profileSettingsModalEl && profileStatsTabBtn) {
         viewStatsBtn.addEventListener('click', function() {
-            // Modal toggle is handled by data attributes, we just need to switch tab
+            // L'ouverture/fermeture de la modale est gérée par les attributs data, je dois juste changer d'onglet
             const statsTabInstance = bootstrap.Tab.getInstance(profileStatsTabBtn) || new bootstrap.Tab(profileStatsTabBtn);
             if (statsTabInstance) {
                 statsTabInstance.show();
@@ -1469,39 +1474,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
     fetchDashboardData();
     const REFRESH_INTERVAL = 60000;
-    console.log(`Setting up auto-refresh every ${REFRESH_INTERVAL / 1000} seconds.`);
+    console.log(`Mise en place du rafraîchissement auto toutes les ${REFRESH_INTERVAL / 1000} secondes.`);
     setInterval(fetchDashboardData, REFRESH_INTERVAL);
 
-    // --- Admin Functions & Listeners ---
-    // Helper to display messages in the admin modal section
+    // --- Fonctions & Listeners Admin ---
+    // Aide pour afficher les messages dans la section modale admin
     function displayAdminCurrencyMessage(message, isError = false) {
         if (!adminMessageArea) return;
         adminMessageArea.textContent = message;
         adminMessageArea.className = `alert ${isError ? 'alert-danger' : 'alert-success'}`;
     }
 
-    // Reset the admin currency form to its default state (for adding new)
+    // Réinitialise le formulaire de devise admin à son état par défaut (pour ajout)
     function clearAdminCurrencyForm() {
         if (!adminCurrencyForm) return;
-        adminCurrencyForm.reset(); // Resets form fields
-        if (adminCurrencyIdInput) adminCurrencyIdInput.value = ''; // Clear hidden ID
+        adminCurrencyForm.reset(); // Réinitialise les champs du formulaire
+        if (adminCurrencyIdInput) adminCurrencyIdInput.value = ''; // Vide l'ID caché
         if (adminUpdateBtn) adminUpdateBtn.disabled = true;
         if (adminDeleteBtn) adminDeleteBtn.disabled = true;
         if (adminAddBtn) adminAddBtn.disabled = false;
-        if (adminMessageArea) adminMessageArea.classList.add('d-none'); // Hide messages
+        if (adminMessageArea) adminMessageArea.classList.add('d-none'); // Masque les messages
     }
 
-    // Fetch the list of currencies and populate the admin dropdown
+    // Fetch la liste des devises et peuple le dropdown admin
     async function loadAdminCurrenciesDropdown() {
         if (!adminCurrencySelect) return;
 
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/currencies`); // Use new admin endpoint
-            if (!response.ok) throw new Error(`API Error: ${response.status}`);
+            const response = await fetch(`${API_BASE_URL}/admin/currencies`); // J'utilise le nouvel endpoint admin
+            if (!response.ok) throw new Error(`Erreur API: ${response.status}`);
             const result = await response.json();
 
             if (result.success && Array.isArray(result.data)) {
-                // Clear existing options (keep the first "Add New" option)
+                // Je vide les options existantes (garde la première "Ajouter Nouvelle")
                 adminCurrencySelect.innerHTML = '<option value="new" selected>-- Ajouter Nouvelle Crypto --</option>';
                 result.data.forEach(currency => {
                     const option = document.createElement('option');
@@ -1510,24 +1515,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     adminCurrencySelect.appendChild(option);
                 });
             } else {
-                throw new Error(result.message || 'Failed to load currencies');
+                throw new Error(result.message || 'Échec chargement devises');
             }
         } catch (error) {
-            console.error('Error loading admin currencies:', error);
+            console.error('Erreur chargement devises admin:', error);
              displayAdminCurrencyMessage(`Erreur chargement devises: ${error.message}`, true);
         }
     }
 
-    // Fetch details for a specific currency and populate the admin form
+    // Fetch les détails d'une devise spécifique et peuple le formulaire admin
     async function loadCurrencyDetailsForAdminForm(currencyId) {
         if (!currencyId || currencyId === 'new' || !adminCurrencyForm) return;
-        clearAdminCurrencyForm(); // Start with a clean slate
+        clearAdminCurrencyForm(); // Je commence avec un formulaire propre
 
         try {
             const response = await fetch(`${API_BASE_URL}/admin/currency/${currencyId}`);
             if (!response.ok) {
                 if (response.status === 404) throw new Error('Devise non trouvée.');
-                throw new Error(`API Error: ${response.status}`);
+                throw new Error(`Erreur API: ${response.status}`);
             }
             const result = await response.json();
 
@@ -1542,34 +1547,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (adminCurrencyVolatilityInput) adminCurrencyVolatilityInput.value = details.base_volatility || '';
                 if (adminCurrencyTrendInput) adminCurrencyTrendInput.value = details.base_trend || '';
 
-                // Enable Update/Delete, disable Add
+                // J'active MàJ/Suppr, désactive Ajout
                 if (adminUpdateBtn) adminUpdateBtn.disabled = false;
                 if (adminDeleteBtn) adminDeleteBtn.disabled = false;
                 if (adminAddBtn) adminAddBtn.disabled = true;
             } else {
-                throw new Error(result.message || 'Failed to load currency details');
+                throw new Error(result.message || 'Échec chargement détails devise');
             }
         } catch (error) {
-            console.error(`Error loading currency details for ${currencyId}:`, error);
+            console.error(`Erreur chargement détails pour ${currencyId}:`, error);
             displayAdminCurrencyMessage(`Erreur chargement détails: ${error.message}`, true);
-             clearAdminCurrencyForm(); // Reset form on error
+             clearAdminCurrencyForm(); // Je réinitialise le formulaire en cas d'erreur
         }
     }
 
-    // --- User Profile Functions & Listeners ---
-    // Helper to display messages in the user profile modal section
+    // --- Fonctions & Listeners Profil Utilisateur ---
+    // Aide pour afficher les messages dans la section modale profil user
     function displayUserProfileMessage(message, isError = false) {
         if (!userProfileMessageArea) return;
         userProfileMessageArea.textContent = message;
         userProfileMessageArea.className = `alert ${isError ? 'alert-danger' : 'alert-success'}`;
         userProfileMessageArea.classList.remove('d-none');
-         // Optionally hide after a few seconds
+         // Optionnel : masque après quelques secondes
          setTimeout(() => {
             if (userProfileMessageArea) {
                  userProfileMessageArea.classList.add('d-none');
                  userProfileMessageArea.textContent = '';
-                 userProfileMessageArea.className = 'mb-3'; // Reset class
+                 userProfileMessageArea.className = 'mb-3'; // Je réinitialise la classe
              }
-         }, 5000); // Hide after 5 seconds
+         }, 5000); // Masque après 5 secondes
     }
 });
