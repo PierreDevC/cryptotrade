@@ -29,13 +29,11 @@ Pour faire tourner ça sur votre machine, jetez un œil au tutoriel détaillé c
 
 ## Licence ©️
 
-[Votre Licence ici, ex: MIT License] - En gros, faites ce que vous voulez mais ne venez pas me blâmer si ça casse ! 😉
+[MIT License] - 
 
 ---
 
-## Tutoriel d'Installation (à inclure dans le README ou un fichier INSTALL.md)
-
-Alors, envie de lancer CryptoTrade chez vous ? C'est parti !
+## Tutoriel d'Installation 
 
 **Prérequis : Ce qu'il vous faut avant de commencer**
 
@@ -81,12 +79,5 @@ Alors, envie de lancer CryptoTrade chez vous ? C'est parti !
 7.  **Accéder à l'Application :**
     *   Ouvrez votre navigateur et allez à l'URL définie dans `BASE_URL` (par défaut : `http://localhost/cryptotrade`).
     *   Et voilà ! Vous devriez voir la page d'accueil.
-
-**En cas de problème :**
-
-*   **Page blanche ou erreur 500 ?** Vérifiez les logs d'erreurs d'Apache et de PHP. Ils se trouvent souvent dans un dossier `logs` de votre installation XAMPP/WAMP/MAMP.
-*   **Erreur de connexion BDD ?** Revérifiez les identifiants dans `config.php`.
-*   **URLs qui ne marchent pas (erreur 404 sauf page d'accueil) ?** C'est souvent un problème avec `mod_rewrite` ou la configuration `.htaccess` (`AllowOverride`).
-*   **Erreurs bizarres dans l'appli ?** Regardez la console du navigateur (F12) pour les erreurs JavaScript et le fichier `storage/logs/audit.log` (même s'il est plus pour le suivi que pour les erreurs critiques).
 
 Amusez-vous bien avec CryptoTrade !
