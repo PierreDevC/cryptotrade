@@ -19,10 +19,11 @@ class Database {
     private $db_name = DB_NAME;
     private $username = DB_USER;
     private $password = DB_PASS;
+    private $port = DB_PORT;
 
     // Constructeur privé pour le Singleton
     private function __construct() {
-        $dsn = 'mysql:host=' . $this->host . ';dbname=' . $this->db_name;
+        $dsn = 'mysql:host=' . $this->host . ';port=' . $this->port . ';dbname=' . $this->db_name;
         // Quelques options pour PDO
         $options = [
             PDO::ATTR_PERSISTENT => true, // Connexion persistante
