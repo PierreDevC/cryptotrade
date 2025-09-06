@@ -21,7 +21,7 @@ define('PASSWORD_COST', 10);
 // Rapports d'erreurs (Dev vs Prod)
 // Pour le dev :
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', '1');
 // Pour la prod :
 // error_reporting(0);
 // ini_set('display_errors', 0);
