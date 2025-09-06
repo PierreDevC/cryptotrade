@@ -56,8 +56,8 @@ class DashboardController {
         // TODO : À récupérer depuis la config ou une API (par ex., App\Config::get('rates.usd_to_cad'))
 
         foreach ($holdingsRaw as $holding) {
-            // Je traite le prix de la BDD comme étant en CAD maintenant
-            $currentPriceCAD = (float)$holding['current_price_usd']; // Je traite la valeur de la BDD comme du CAD
+            // The database stores prices in USD but we treat them as CAD for display
+            $currentPriceCAD = (float)$holding['current_price_usd']; // Database column is current_price_usd
             $currentValueCAD = $holding['quantity'] * $currentPriceCAD;
             $portfolioValueCryptoCAD += $currentValueCAD;
 
@@ -189,7 +189,7 @@ class DashboardController {
 
         // Je calcule le pourcentage pour chaque avoir
         foreach ($holdingsRaw as $holding) {
-            $currentPriceCAD = (float)$holding['current_price_usd'];
+            $currentPriceCAD = (float)$holding['current_price_usd']; // Database column is current_price_usd
             $currentValueCAD = $holding['quantity'] * $currentPriceCAD;
             $percentage = ($totalCryptoValueCAD > 0) ? ($currentValueCAD / $totalCryptoValueCAD) * 100 : 0;
 

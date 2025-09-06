@@ -1,8 +1,7 @@
 <?php
 // ADDED: Require Session for flash messages
 require_once __DIR__ . '/app/Core/Session.php';
-// ADDED: Require Csrf to generate token
-require_once __DIR__ . '/app/Utils/Csrf.php';
+// CSRF class will be loaded by autoloader when needed
 ?>
 <!doctype html>
 <html>

@@ -681,8 +681,6 @@
     <script src="/cryptotrade/js/dashboard_ajax.js" defer></script>
 
     <!-- ADDED: Inject CSRF token for AJAX -->
-    <?php require_once __DIR__ . 
-'/app/Utils/Csrf.php'; ?>
     <script>
         const CSRF_TOKEN = "<?php echo App\Utils\Csrf::generateToken(); ?>";
         const CSRF_FIELD_NAME = "<?php echo App\Utils\Csrf::getTokenName(); ?>";
