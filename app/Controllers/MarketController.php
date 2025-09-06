@@ -199,7 +199,7 @@ class MarketController {
                 $this->db->commit(); // Je valide toutes les mises à jour
 
                 // Je mets à jour le fichier timestamp
-                if (file_put_contents(self::LAST_UPDATE_FILE, $currentTime) === false) {
+                if (@file_put_contents(self::LAST_UPDATE_FILE, $currentTime) === false) {
                     error_log("MarketController: Failed to write last update time to " . self::LAST_UPDATE_FILE);
                 }
                  error_log("MarketController: Prices updated successfully at " . $currentTime); // Log succès
