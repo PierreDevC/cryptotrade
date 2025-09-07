@@ -14,7 +14,7 @@ if (isset($_ENV['MYSQL_URL'])) {
     define('DB_NAME', ltrim($db_url['path'], '/'));
     define('DB_USER', $db_url['user']);
     define('DB_PASS', $db_url['pass']);
-    define('DB_PORT', $db_url['port'] ?? 3306);
+    define('DB_PORT', $db_url['port'] ?? 3307);
     
     // Production mode on Railway
     error_reporting(0);
@@ -26,7 +26,7 @@ if (isset($_ENV['MYSQL_URL'])) {
     define('DB_NAME', 'cryptotrade_db');
     define('DB_USER', 'root');
     define('DB_PASS', '');
-    define('DB_PORT', 3306);
+    define('DB_PORT', 3307);
     
     // Development mode locally
     error_reporting(E_ALL);
