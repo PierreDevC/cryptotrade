@@ -13,9 +13,9 @@ class Request {
     }
 
     public function getUri() {
-        $uri = trim(parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH), "/");
+        $uri = trim(parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH) ?? '', "/");
         // J'enlève le répertoire de base si besoin (ajuster "cryptotrade" si nécessaire)
-        $baseDir = trim(parse_url(BASE_URL, PHP_URL_PATH), "/");
+        $baseDir = trim(parse_url(BASE_URL, PHP_URL_PATH) ?? '', "/");
         if ($baseDir && strpos($uri, $baseDir) === 0) {
             $uri = substr($uri, strlen($baseDir));
         }

@@ -16,15 +16,15 @@ require_once __DIR__ . '/app/Core/Session.php';
     <!-- Other CDN links -->
     <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- CSS - Use root-relative path -->
-    <link rel="stylesheet" href="/cryptotrade/css/style.css">
+    <!-- CSS - Use asset helper function -->
+    <link rel="stylesheet" href="<?= asset_url('css/style.css') ?>">
 </head>
 <body>
     <div class="container-fluid vh-100">
         <div class="row h-100">
             <!-- Left column -->
             <div class="col-md-6 col-lg-6 d-none d-md-block p-0 position-relative h-100 overflow-hidden">
-                <a href="/cryptotrade/" class="text-decoration-none">
+                <a href="<?= BASE_URL ?>/" class="text-decoration-none">
                     <h1 class="position-absolute text-white p-4 brand-logo" style="z-index: 1;">CryptoTrade</h1>
                 </a>
                 <?php
@@ -32,7 +32,7 @@ require_once __DIR__ . '/app/Core/Session.php';
                     $loginImages = ['login.jpg', 'login2.jpg', 'login3.jpg'];
                     $selectedIndex = mt_rand(0, count($loginImages) - 1);
                     $selectedImageFile = $loginImages[$selectedIndex];
-                    $imagePath = '/cryptotrade/img/' . $selectedImageFile;
+                    $imagePath = asset_url('img/' . $selectedImageFile);
                 ?>
                 <img src="<?php echo htmlspecialchars($imagePath); ?>" class="w-100 h-100" style="object-fit: cover;" alt="Login background image">
             </div>
@@ -40,7 +40,7 @@ require_once __DIR__ . '/app/Core/Session.php';
             <div class="col-12 col-md-6 col-lg-6 d-flex align-items-center justify-content-center">
                 <div class="w-75" style="max-width: 400px;">
                     <div class="text-center mb-4 d-md-none">
-                         <a href="/cryptotrade/" class="navbar-brand brand-logo fs-2 text-dark text-decoration-none">CryptoTrade</a>
+                         <a href="<?= BASE_URL ?>/" class="navbar-brand brand-logo fs-2 text-dark text-decoration-none">CryptoTrade</a>
                     </div>
                     <h2 class="text-center mb-4">Se connecter</h2>
 
@@ -60,7 +60,7 @@ require_once __DIR__ . '/app/Core/Session.php';
                              </div>
                          <?php endif; ?>
 
-                    <form method="POST" action="/cryptotrade/login">
+                    <form method="POST" action="<?= BASE_URL ?>/login">
                         <!-- ADDED: CSRF Token Field -->
                         <input type="hidden" name="<?php echo App\Utils\Csrf::getTokenName(); ?>" value="<?php echo App\Utils\Csrf::generateToken(); ?>">
                         <div class="mb-3">
@@ -76,7 +76,7 @@ require_once __DIR__ . '/app/Core/Session.php';
                         </div>
                         <p class="text-center mt-3">
                             Vous n'avez pas encore de compte?
-                            <a href="/cryptotrade/signup" class="text-decoration-none">Créer un compte</a>
+                            <a href="<?= BASE_URL ?>/signup" class="text-decoration-none">Créer un compte</a>
                         </p>
                     </form>
                 </div>

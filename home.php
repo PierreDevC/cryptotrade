@@ -12,14 +12,14 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.3.0/chart.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-	<!-- CSS - Use root-relative path -->
-	<link rel="stylesheet" href="/cryptotrade/css/style.css">
+	<!-- CSS - Use asset helper function -->
+	<link rel="stylesheet" href="<?= asset_url('css/style.css') ?>">
 </head>
 <body>
 	<!-- Navbar --->
 <nav class="sticky-top navbar navbar-expand-lg py-4 border-bottom" style="background-color: rgba(255, 255, 255, 0.8);">
 <div class="container">
-    <a class="navbar-brand brand-logo" href="/cryptotrade/">CryptoTrade</a>
+    <a class="navbar-brand brand-logo" href="<?= BASE_URL ?>/">CryptoTrade</a>
 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -31,8 +31,8 @@
 		<li class="nav-item"><a class="nav-link active" aria-current="page" href="#">À propos</a></li>
       </ul>
 <div class="d-flex gap-2">
-    <a href="/cryptotrade/signup" class="button-57 text-decoration-none" role="button"><span class="text">Commencer gratuitement</span><span>Créer un compte</span></a>
-    <a href="/cryptotrade/login" class="action-button text-decoration-none">Se connecter</a>
+    <a href="<?= BASE_URL ?>/signup" class="button-57 text-decoration-none" role="button"><span class="text">Commencer gratuitement</span><span>Créer un compte</span></a>
+    <a href="<?= BASE_URL ?>/login" class="action-button text-decoration-none">Se connecter</a>
 </div>
     </div>
   </div>
@@ -40,13 +40,13 @@
 	<!-- Section 1 : Banner -->
 	<section id="section1">
 		<div class="container-fluid p-0"> <div class="position-relative">
-		<img src="/cryptotrade/img/banner.png" class="w-100" style="height: 500px; object-fit: cover;" alt="Banner background">
+		<img src="<?= asset_url('img/banner.png') ?>" class="w-100" style="height: 500px; object-fit: cover;" alt="Banner background">
 		<div class="position-absolute top-50 start-50 translate-middle text-center mt-n5">
             <h1 class="display-4 mb-4">La meilleure plateforme pour investir dans les meilleures cryptos</h1>
             <p class="bg-white bg-opacity-75 shadow p-3 rounded">Découvrez CryptoTrade, votre plateforme intuitive et sécurisée...</p>
             <div class="d-flex justify-content-center gap-3">
-                <a href="/cryptotrade/signup" class="button-57 text-decoration-none" role="button"><span class="text">Commencer gratuitement</span><span>Créer un compte</span></a>
-                <a href="/cryptotrade/login" class="action-button text-decoration-none">Se connecter</a>
+                <a href="<?= BASE_URL ?>/signup" class="button-57 text-decoration-none" role="button"><span class="text">Commencer gratuitement</span><span>Créer un compte</span></a>
+                <a href="<?= BASE_URL ?>/login" class="action-button text-decoration-none">Se connecter</a>
             </div>
         </div>
 	    </div></div>
@@ -57,9 +57,9 @@
 	    <h1 class="text-center">Découvrez notre plateforme complète</h1>
 		<div class="swiper-container"> <div class="swiper mySwiper">
 			<div class="swiper-wrapper">
-			  <div class="swiper-slide"><img src="/cryptotrade/img/swiper-1.png" alt="Image 1"/></div>
-			  <div class="swiper-slide"><img src="/cryptotrade/img/swiper-2.png" alt="Image 2"/></div>
-			  <div class="swiper-slide"><img src="/cryptotrade/img/swiper-3.png" alt="Image 3"/></div>
+			  <div class="swiper-slide"><img src="<?= asset_url('img/swiper-1.png') ?>" alt="Image 1"/></div>
+			  <div class="swiper-slide"><img src="<?= asset_url('img/swiper-2.png') ?>" alt="Image 2"/></div>
+			  <div class="swiper-slide"><img src="<?= asset_url('img/swiper-3.png') ?>" alt="Image 3"/></div>
 			</div>
 			<div class="swiper-button-next"></div><div class="swiper-button-prev"></div><div class="swiper-pagination"></div>
 			<div class="autoplay-progress"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="20"></circle></svg><span></span></div>
@@ -69,11 +69,11 @@
 	<!-- Section 3 : 2 columns -->
 	<section id="section3-2columns">
 		<div class="container text-center"> <div class="row align-items-center">
-            <div class="col"><img class="custom-img" src="/cryptotrade/img/iphone.png" width="500px" alt=""/></div>
+            <div class="col"><img class="custom-img" src="<?= asset_url('img/iphone.png') ?>" width="500px" alt=""/></div>
             <div class="col text-start">
               <h1 class="text text-start">Plateforme performante et sécurisée</h1>
               <p class="text-start">Notre plateforme CryptoTrade se distingue par son infrastructure robuste...</p>
-              <a href="/cryptotrade/signup" class="button-57 text-decoration-none" role="button"><span class="text">Découvrir la plateforme</span><span>Créer un compte</span></a>
+              <a href="<?= BASE_URL ?>/signup" class="button-57 text-decoration-none" role="button"><span class="text">Découvrir la plateforme</span><span>Créer un compte</span></a>
             </div>
   		</div></div>
 	</section>
@@ -82,13 +82,13 @@
     <section id="section-3">
         <h1 class="text-center">Explorez nos services et fonctionalités</h1>
         <div class="container"> <div class="card-group">
-            <div class="card"> <img src="/cryptotrade/img/simple.png" class="card-img-top" alt="...">
+            <div class="card"> <img src="<?= asset_url('img/simple.png') ?>" class="card-img-top" alt="...">
                 <div class="card-body"> <h5 class="card-title">Trading Simplifié</h5><p class="card-text">Accédez facilement...</p><button class="action-button" type="button">En savoir plus</button></div>
             </div>
-            <div class="card"> <img src="/cryptotrade/img/reel.png" class="card-img-top" alt="...">
+            <div class="card"> <img src="<?= asset_url('img/reel.png') ?>" class="card-img-top" alt="...">
                  <div class="card-body"> <h5 class="card-title">Suivi en Temps Réel</h5><p class="card-text">Surveillez vos investissements...</p><button class="action-button" type="button">En savoir plus</button></div>
             </div>
-            <div class="card"> <img src="/cryptotrade/img/securite.png" class="card-img-top" alt="...">
+            <div class="card"> <img src="<?= asset_url('img/securite.png') ?>" class="card-img-top" alt="...">
                  <div class="card-body"> <h5 class="card-title">Sécurité Maximale</h5><p class="card-text">Profitez d'une protection...</p><button class="action-button" type="button">En savoir plus</button></div>
             </div>
         </div></div>
@@ -100,9 +100,9 @@
             <div class="col text-end">
                 <h1 class="text text-end">L'innovation au service de votre réussite</h1>
                 <p class="text-end">Découvrez une plateforme en constante évolution...</p>
-                <a href="/cryptotrade/signup" class="button-57 text-decoration-none" role="button"><span class="text">Découvrir la plateforme</span><span>Créer un compte</span></a>
+                <a href="<?= BASE_URL ?>/signup" class="button-57 text-decoration-none" role="button"><span class="text">Découvrir la plateforme</span><span>Créer un compte</span></a>
             </div>
-            <div class="col"><img class="custom-img" src="/cryptotrade/img/eth.jpg" width="500px" alt=""/></div>
+            <div class="col"><img class="custom-img" src="<?= asset_url('img/eth.jpg') ?>" width="500px" alt=""/></div>
   		</div></div>
 	</section>
 
@@ -129,7 +129,7 @@
         <div class="col-md-3 col-lg-2 col-xl-2 mx-auto mb-4"> <h6 class="text-uppercase fw-bold mb-4">Liens Utiles</h6><p><a href="#!" class="text-reset">Centre d'aide</a></p><p><a href="#!" class="text-reset">Frais</a></p><p><a href="#!" class="text-reset">À Propos</a></p><p><a href="#!" class="text-reset">Termes et Conditions</a></p><p><a href="#!" class="text-reset">Politique de Confidentialité</a></p></div>
         <div class="col-md-4 col-lg-3 col-xl-3 mx-auto mb-md-0 mb-4"> <h6 class="text-uppercase fw-bold mb-4">Contact</h6><p><i class="fas fa-home me-3"></i> Montréal, QC...</p><p><i class="fas fa-envelope me-3"></i> info@cryptotrade.example.com</p><p><i class="fas fa-phone me-3"></i> + 1 514 123 4567</p><div class="mt-3"><a href="#!" class="me-4 text-reset"><i class="fab fa-facebook-f"></i></a><a href="#!" class="me-4 text-reset"><i class="fab fa-twitter"></i></a><a href="#!" class="me-4 text-reset"><i class="fab fa-linkedin"></i></a><a href="#!" class="me-4 text-reset"><i class="fab fa-github"></i></a></div></div>
     </div></div>
-	<div class="text-center p-4" style="background-color: rgba(0, 0, 0, 0.05);">© 2025 Copyright: <a class="text-reset fw-bold" href="/cryptotrade/">CryptoTrade.com</a></div>
+	<div class="text-center p-4" style="background-color: rgba(0, 0, 0, 0.05);">© 2025 Copyright: <a class="text-reset fw-bold" href="<?= BASE_URL ?>/">CryptoTrade.com</a></div>
 	</footer></section>
 
 	<!-- Swiper JS Logic -->

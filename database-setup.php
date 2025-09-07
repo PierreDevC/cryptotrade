@@ -1,174 +1,155 @@
 <?php
-// Database setup page for Railway deployment
-// This will create all tables and data automatically via your web app
+// Database Setup Script for Railway
+// This script initializes the database with tables and sample data
+// Run this ONCE after deploying to Railway
 
-header('Content-Type: text/html; charset=utf-8');
+require_once "config.php";
+require_once "app/Core/Database.php";
 
-// Check if running on Railway
-if (!isset($_ENV['MYSQL_URL'])) {
-    die('This setup page only works on Railway deployment.');
+// Only allow this to run if we're on Railway or if explicitly allowed
+if (!isset($_ENV['RAILWAY_PUBLIC_DOMAIN']) && !isset($_GET['allow_local'])) {
+    die("This script is only meant for Railway deployment. Add ?allow_local=1 to run locally.");
 }
 
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/app/Core/Database.php';
-?>
-<!DOCTYPE html>
-<html>
-<head>
-    <title>CryptoTrade Database Setup</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
-        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-width: 800px; }
-        .success { color: #28a745; background: #d4edda; padding: 15px; border-radius: 4px; margin: 10px 0; }
-        .error { color: #dc3545; background: #f8d7da; padding: 15px; border-radius: 4px; margin: 10px 0; }
-        .info { color: #0c5460; background: #bee5eb; padding: 15px; border-radius: 4px; margin: 10px 0; }
-        button { background: #007bff; color: white; padding: 15px 30px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin: 10px 5px; }
-        button:hover { background: #0056b3; }
-        button:disabled { background: #6c757d; cursor: not-allowed; }
-        .step { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 4px; }
-        .step h3 { margin-top: 0; color: #333; }
-        pre { background: #f8f9fa; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🚀 CryptoTrade Database Setup for Railway</h1>
+try {
+    $db = App\Core\Database::getInstance()->getConnection();
+    
+    echo "<h1>CryptoTrade Database Setup</h1>";
+    echo "<p>Setting up database tables and initial data...</p>";
+    
+    // Read and execute the setup SQL
+    $setupSQL = file_get_contents(__DIR__ . '/railway-db-setup.sql');
+    
+    if (!$setupSQL) {
+        throw new Exception("Could not read railway-db-setup.sql file");
+    }
+    
+    // Split SQL into individual statements
+    $statements = array_filter(array_map('trim', explode(';', $setupSQL)));
+    
+    $successCount = 0;
+    $errorCount = 0;
+    
+    echo "<h2>Executing SQL Statements:</h2>";
+    echo "<ul>";
+    
+    foreach ($statements as $statement) {
+        if (empty($statement) || strpos($statement, '--') === 0) {
+            continue; // Skip empty lines and comments
+        }
         
-        <?php if (isset($_POST['setup_database'])): ?>
-            <h2>Setting up your database...</h2>
+        try {
+            $db->exec($statement);
+            $successCount++;
             
-            <?php
-            try {
-                $db = App\Core\Database::getInstance();
-                $conn = $db->getConnection();
-                echo "<div class='success'>✅ Database connection successful!</div>";
-                
-                // Read the database setup SQL
-                $sqlFile = __DIR__ . '/railway-db-setup.sql';
-                $sql = file_get_contents($sqlFile);
-                
-                if ($sql === false) {
-                    throw new Exception("Could not read railway-db-setup.sql file");
-                }
-                
-                // Execute SQL statements
-                $statements = explode(';', $sql);
-                $executedCount = 0;
-                $errors = [];
-                
-                foreach ($statements as $statement) {
-                    $statement = trim($statement);
-                    if (empty($statement) || strpos($statement, '--') === 0) continue;
-                    
-                    try {
-                        $conn->exec($statement);
-                        $executedCount++;
-                    } catch (PDOException $e) {
-                        // Ignore certain expected errors
-                        if (strpos($e->getMessage(), 'already exists') === false && 
-                            strpos($e->getMessage(), 'Duplicate entry') === false) {
-                            $errors[] = $e->getMessage();
-                        }
-                    }
-                }
-                
-                echo "<div class='success'>✅ Executed $executedCount SQL statements successfully!</div>";
-                
-                if (!empty($errors)) {
-                    echo "<div class='error'>⚠️ Some non-critical errors occurred:<br>" . implode('<br>', array_slice($errors, 0, 3)) . "</div>";
-                }
-                
-                // Verify the setup
-                echo "<h3>Database Verification:</h3>";
-                
-                $stmt = $conn->query("SHOW TABLES");
-                $tables = $stmt->fetchAll();
-                echo "<div class='info'>📊 Tables created: " . count($tables) . "</div>";
-                
-                if (count($tables) >= 4) {
-                    $stmt = $conn->query("SELECT COUNT(*) as count FROM currencies");
-                    $currencies = $stmt->fetch();
-                    
-                    $stmt = $conn->query("SELECT COUNT(*) as count FROM users");
-                    $users = $stmt->fetch();
-                    
-                    echo "<div class='success'>";
-                    echo "💰 Cryptocurrencies: " . $currencies['count'] . "<br>";
-                    echo "👥 Test Users: " . $users['count'] . "<br>";
-                    echo "✅ Database setup complete!";
-                    echo "</div>";
-                    
-                    echo "<div class='info'>";
-                    echo "<strong>Test Accounts Created:</strong><br>";
-                    echo "• admin@cryptotrade.com / password123 (Admin - $100,000)<br>";
-                    echo "• user@cryptotrade.com / password123 (User - $10,000)<br>";
-                    echo "• demo@cryptotrade.com / password123 (Demo - $5,000)";
-                    echo "</div>";
-                    
-                    echo "<div class='success'>";
-                    echo "<strong>🎉 Setup Complete!</strong><br>";
-                    echo "Your CryptoTrade app is now ready to use!<br>";
-                    echo "<a href='/' style='color: white; background: #28a745; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 10px;'>Go to CryptoTrade App</a>";
-                    echo "</div>";
-                }
-                
-            } catch (Exception $e) {
-                echo "<div class='error'>❌ Error: " . htmlspecialchars($e->getMessage()) . "</div>";
+            // Show what we're doing
+            if (stripos($statement, 'CREATE TABLE') !== false) {
+                preg_match('/CREATE TABLE `?(\w+)`?/i', $statement, $matches);
+                $tableName = $matches[1] ?? 'unknown';
+                echo "<li style='color: green;'>✓ Created table: {$tableName}</li>";
+            } elseif (stripos($statement, 'INSERT INTO') !== false) {
+                preg_match('/INSERT INTO `?(\w+)`?/i', $statement, $matches);
+                $tableName = $matches[1] ?? 'unknown';
+                echo "<li style='color: blue;'>✓ Inserted data into: {$tableName}</li>";
+            } elseif (stripos($statement, 'DROP TABLE') !== false) {
+                preg_match('/DROP TABLE.*?`?(\w+)`?/i', $statement, $matches);
+                $tableName = $matches[1] ?? 'unknown';
+                echo "<li style='color: orange;'>✓ Dropped table: {$tableName}</li>";
+            } else {
+                echo "<li style='color: gray;'>✓ Executed statement</li>";
             }
-            ?>
             
-        <?php else: ?>
-            
-            <div class="step">
-                <h3>🔍 Current Status</h3>
-                <?php
-                try {
-                    $db = App\Core\Database::getInstance();
-                    $conn = $db->getConnection();
-                    echo "<div class='success'>✅ Database connection working!</div>";
-                    
-                    $stmt = $conn->query("SHOW TABLES");
-                    $tables = $stmt->fetchAll();
-                    $tableCount = count($tables);
-                    
-                    if ($tableCount == 0) {
-                        echo "<div class='info'>📊 No tables found - ready for setup</div>";
-                    } else {
-                        echo "<div class='info'>📊 Found $tableCount tables - may need reset or already setup</div>";
-                    }
-                    
-                } catch (Exception $e) {
-                    echo "<div class='error'>❌ Database connection failed: " . htmlspecialchars($e->getMessage()) . "</div>";
-                }
-                ?>
-            </div>
-            
-            <div class="step">
-                <h3>🗄️ What This Will Create</h3>
-                <ul>
-                    <li><strong>4 Database Tables:</strong> users, currencies, wallets, transactions</li>
-                    <li><strong>10 Cryptocurrencies:</strong> Bitcoin, Ethereum, Solana, BNB, XRP, Cardano, Dogecoin, Polkadot, Chainlink, Tether</li>
-                    <li><strong>3 Test Accounts:</strong> Admin, User, Demo (all with password: password123)</li>
-                    <li><strong>Foreign Key Relationships:</strong> Proper database structure for trading</li>
-                </ul>
-            </div>
-            
-            <div class="step">
-                <h3>🚀 Ready to Setup?</h3>
-                <p>Click the button below to automatically create all database tables and initial data.</p>
-                <form method="post">
-                    <button type="submit" name="setup_database">🔧 Setup Database Now</button>
-                </form>
-            </div>
-            
-        <?php endif; ?>
+        } catch (PDOException $e) {
+            $errorCount++;
+            echo "<li style='color: red;'>✗ Error: " . htmlspecialchars($e->getMessage()) . "</li>";
+        }
+    }
+    
+    echo "</ul>";
+    
+    echo "<h2>Setup Summary:</h2>";
+    echo "<p><strong>Successful operations:</strong> {$successCount}</p>";
+    echo "<p><strong>Errors:</strong> {$errorCount}</p>";
+    
+    if ($errorCount === 0) {
+        echo "<div style='background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; border-radius: 5px; margin: 20px 0;'>";
+        echo "<h3>✅ Database Setup Complete!</h3>";
+        echo "<p>Your CryptoTrade database has been successfully initialized.</p>";
+        echo "<h4>Test Admin Account:</h4>";
+        echo "<ul>";
+        echo "<li><strong>Email:</strong> admin@cryptotrade.com</li>";
+        echo "<li><strong>Password:</strong> password123</li>";
+        echo "</ul>";
+        echo "<p><a href='" . BASE_URL . "/login' style='background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Go to Login Page</a></p>";
+        echo "</div>";
         
-        <div style="margin-top: 30px; padding: 15px; background: #f8f9fa; border-radius: 4px; font-size: 12px; color: #666;">
-            <strong>Environment Info:</strong><br>
-            Database: <?= DB_HOST ?>:<?= DB_PORT ?>/<?= DB_NAME ?><br>
-            PHP Version: <?= PHP_VERSION ?><br>
-            Railway URL: <?= isset($_ENV['RAILWAY_PUBLIC_DOMAIN']) ? $_ENV['RAILWAY_PUBLIC_DOMAIN'] : 'Not detected' ?>
-        </div>
-    </div>
-</body>
-</html>
+        // Security: Delete this file after successful setup
+        echo "<h3>Security Notice:</h3>";
+        echo "<p style='color: #856404; background: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; border-radius: 5px;'>";
+        echo "⚠️ For security, you should delete this setup file after use:<br>";
+        echo "<code>rm database-setup.php</code>";
+        echo "</p>";
+        
+    } else {
+        echo "<div style='background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 5px; margin: 20px 0;'>";
+        echo "<h3>❌ Setup had errors</h3>";
+        echo "<p>Some operations failed. Please check the errors above and try again.</p>";
+        echo "</div>";
+    }
+    
+    // Show current database status
+    echo "<h2>Database Status:</h2>";
+    
+    $tables = ['users', 'currencies', 'wallets', 'transactions'];
+    echo "<table border='1' style='border-collapse: collapse; width: 100%;'>";
+    echo "<tr><th>Table</th><th>Record Count</th></tr>";
+    
+    foreach ($tables as $table) {
+        try {
+            $stmt = $db->query("SELECT COUNT(*) as count FROM {$table}");
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            $count = $result['count'];
+            echo "<tr><td>{$table}</td><td>{$count}</td></tr>";
+        } catch (PDOException $e) {
+            echo "<tr><td>{$table}</td><td style='color: red;'>Error: Table not found</td></tr>";
+        }
+    }
+    echo "</table>";
+    
+} catch (Exception $e) {
+    echo "<div style='background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 5px; margin: 20px 0;'>";
+    echo "<h3>❌ Setup Failed</h3>";
+    echo "<p>Error: " . htmlspecialchars($e->getMessage()) . "</p>";
+    echo "</div>";
+}
+?>
+
+<style>
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    line-height: 1.6;
+}
+h1, h2, h3 {
+    color: #333;
+}
+ul {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 5px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+table {
+    margin: 20px 0;
+}
+th, td {
+    padding: 8px 12px;
+    text-align: left;
+}
+th {
+    background: #f8f9fa;
+}
+</style>

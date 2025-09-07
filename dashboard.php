@@ -18,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- CSS - Use root-relative path -->
-    <link rel="stylesheet" href="/cryptotrade/css/style.css">
+    <link rel="stylesheet" href="<?= asset_url('css/style.css') ?>">
     <style>
         /* Styles remain the same */
         .grid-item {
@@ -678,7 +678,7 @@
     <!-- End Profile & Settings Modal -->
 
     <!-- JavaScript - Use root-relative path -->
-    <script src="/cryptotrade/js/dashboard_ajax.js" defer></script>
+    <script src="<?= asset_url('js/dashboard_ajax.js') ?>" defer></script>
 
     <!-- ADDED: Inject CSRF token for AJAX -->
     <script>

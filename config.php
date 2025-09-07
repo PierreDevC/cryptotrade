@@ -45,6 +45,17 @@ if (isset($_ENV['RAILWAY_PUBLIC_DOMAIN'])) {
 // Coût Hachage Mdp (plus haut = plus sûr mais lent)
 define('PASSWORD_COST', 10);
 
+// Helper function for asset URLs
+function asset_url($path) {
+    if (isset($_ENV['RAILWAY_PUBLIC_DOMAIN'])) {
+        // Railway deployment - assets are served from root
+        return '/' . ltrim($path, '/');
+    } else {
+        // Local development - include cryptotrade subdirectory
+        return BASE_URL . '/' . ltrim($path, '/');
+    }
+}
+
 // Rapports d'erreurs (Dev vs Prod)
 // Pour le dev :
 error_reporting(E_ALL);
