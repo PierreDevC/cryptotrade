@@ -30,6 +30,7 @@ class Database {
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, // Je veux des exceptions en cas d'erreur
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, // Je récupère les résultats en tableau associatif
             PDO::ATTR_EMULATE_PREPARES => false, // J'utilise les vraies requêtes préparées
+            PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true, // Enable buffered queries for MySQL
         ];
 
         try {
@@ -70,4 +71,3 @@ class Database {
      private function __clone() { }
      public function __wakeup() { }
 }
-?>

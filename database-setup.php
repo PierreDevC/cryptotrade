@@ -24,7 +24,7 @@ try {
         throw new Exception("Could not read railway-db-setup.sql file");
     }
     
-    // Split SQL into individual statements
+    // Split SQL into individual statements and clean them
     $statements = array_filter(array_map('trim', explode(';', $setupSQL)));
     
     $successCount = 0;
@@ -34,30 +34,42 @@ try {
     echo "<ul>";
     
     foreach ($statements as $statement) {
-        if (empty($statement) || strpos($statement, '--') === 0) {
-            continue; // Skip empty lines and comments
+        if (empty($statement) || strpos($statement, '--') === 0 || strpos($statement, 'SELECT') === 0) {
+            continue; // Skip empty lines, comments, and SELECT statements
         }
         
         try {
-            $db->exec($statement);
-            $successCount++;
+            // Use prepare and execute for better error handling
+            $stmt = $db->prepare($statement);
+            $result = $stmt->execute();
             
-            // Show what we're doing
-            if (stripos($statement, 'CREATE TABLE') !== false) {
-                preg_match('/CREATE TABLE `?(\w+)`?/i', $statement, $matches);
-                $tableName = $matches[1] ?? 'unknown';
-                echo "<li style='color: green;'>✓ Created table: {$tableName}</li>";
-            } elseif (stripos($statement, 'INSERT INTO') !== false) {
-                preg_match('/INSERT INTO `?(\w+)`?/i', $statement, $matches);
-                $tableName = $matches[1] ?? 'unknown';
-                echo "<li style='color: blue;'>✓ Inserted data into: {$tableName}</li>";
-            } elseif (stripos($statement, 'DROP TABLE') !== false) {
-                preg_match('/DROP TABLE.*?`?(\w+)`?/i', $statement, $matches);
-                $tableName = $matches[1] ?? 'unknown';
-                echo "<li style='color: orange;'>✓ Dropped table: {$tableName}</li>";
+            if ($result) {
+                $successCount++;
+                
+                // Show what we're doing
+                if (stripos($statement, 'CREATE TABLE') !== false) {
+                    preg_match('/CREATE TABLE `?(\w+)`?/i', $statement, $matches);
+                    $tableName = $matches[1] ?? 'unknown';
+                    echo "<li style='color: green;'>✓ Created table: {$tableName}</li>";
+                } elseif (stripos($statement, 'INSERT INTO') !== false) {
+                    preg_match('/INSERT INTO `?(\w+)`?/i', $statement, $matches);
+                    $tableName = $matches[1] ?? 'unknown';
+                    $rowCount = $stmt->rowCount();
+                    echo "<li style='color: blue;'>✓ Inserted {$rowCount} rows into: {$tableName}</li>";
+                } elseif (stripos($statement, 'DROP TABLE') !== false) {
+                    preg_match('/DROP TABLE.*?`?(\w+)`?/i', $statement, $matches);
+                    $tableName = $matches[1] ?? 'unknown';
+                    echo "<li style='color: orange;'>✓ Dropped table: {$tableName}</li>";
+                } else {
+                    echo "<li style='color: gray;'>✓ Executed statement</li>";
+                }
             } else {
-                echo "<li style='color: gray;'>✓ Executed statement</li>";
+                $errorCount++;
+                echo "<li style='color: red;'>✗ Failed to execute statement</li>";
             }
+            
+            // Close the statement to free up resources
+            $stmt->closeCursor();
             
         } catch (PDOException $e) {
             $errorCount++;
@@ -106,12 +118,14 @@ try {
     
     foreach ($tables as $table) {
         try {
-            $stmt = $db->query("SELECT COUNT(*) as count FROM {$table}");
+            $stmt = $db->prepare("SELECT COUNT(*) as count FROM `{$table}`");
+            $stmt->execute();
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             $count = $result['count'];
-            echo "<tr><td>{$table}</td><td>{$count}</td></tr>";
+            echo "<tr><td>{$table}</td><td style='color: green;'>{$count}</td></tr>";
+            $stmt->closeCursor();
         } catch (PDOException $e) {
-            echo "<tr><td>{$table}</td><td style='color: red;'>Error: Table not found</td></tr>";
+            echo "<tr><td>{$table}</td><td style='color: red;'>Error: " . htmlspecialchars($e->getMessage()) . "</td></tr>";
         }
     }
     echo "</table>";
