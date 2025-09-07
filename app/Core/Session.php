@@ -50,4 +50,3 @@ class Session {
 }
 // J'initialise la session direct
 Session::init();
-?>

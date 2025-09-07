@@ -81,4 +81,3 @@ class Csrf {
          return self::$tokenName;
      }
 }
-?> 

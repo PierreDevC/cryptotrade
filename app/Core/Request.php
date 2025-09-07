@@ -64,4 +64,3 @@ class Request {
          return isset($_POST[$key]) ? filter_input(INPUT_POST, $key, FILTER_SANITIZE_SPECIAL_CHARS) : $default;
      }
 }
-?>

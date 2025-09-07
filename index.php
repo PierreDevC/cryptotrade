@@ -112,5 +112,3 @@ try {
      http_response_code(500);
      echo "Une erreur inattendue s'est produite.";
 }
-
-?>
