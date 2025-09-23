@@ -1,8 +1,8 @@
-# CryptoTrade 📈
+# CryptoTrade 
 
 Salut et bienvenue sur CryptoTrade ! C'est une plateforme web de simulation de trading de cryptomonnaies, développée principalement en PHP avec une architecture MVC "maison".
 
-## C'est quoi l'idée ? 🤔
+## C'est quoi l'idée ? 
 
 L'objectif, c'est de fournir une interface simple et sympa pour :
 *   S'inscrire et se connecter.
@@ -15,7 +15,7 @@ L'objectif, c'est de fournir une interface simple et sympa pour :
 
 Le tout est rendu dynamique côté client grâce à AJAX et Chart.js pour les graphiques.
 
-## Tech Stack 🛠️
+## Tech Stack 
 
 *   **Backend :** PHP 8+ (orienté objet)
 *   **Base de Données :** MySQL / MariaDB
@@ -23,11 +23,11 @@ Le tout est rendu dynamique côté client grâce à AJAX et Chart.js pour les gr
 *   **Architecture :** MVC (Modèle-Vue-Contrôleur) custom, Front Controller Pattern
 *   **Serveur :** Apache (avec mod_rewrite pour les URLs sympas via `.htaccess`)
 
-## Installation 🚀
+## Installation 
 
 Pour faire tourner ça sur votre machine, jetez un œil au tutoriel détaillé ci-dessous ou dans le fichier `INSTALL.md` (si vous préférez le créer).
 
-## Licence ©️
+## Licence 
 
 [MIT License] - 
 
