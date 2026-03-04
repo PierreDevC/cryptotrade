@@ -104,8 +104,8 @@ class AdminController {
 
         // Je nettoie/valide les types.
         $currencyData = [
-            'name' => filter_var($data['name'], FILTER_SANITIZE_STRING),
-            'symbol' => strtoupper(filter_var($data['symbol'], FILTER_SANITIZE_STRING)),
+            'name' => htmlspecialchars(strip_tags($data['name']), ENT_QUOTES, 'UTF-8'),
+            'symbol' => strtoupper(htmlspecialchars(strip_tags($data['symbol']), ENT_QUOTES, 'UTF-8')),
             'current_price_cad' => filter_var($data['current_price_cad'], FILTER_VALIDATE_FLOAT),
             'change_24h_percent' => filter_var($data['change_24h_percent'], FILTER_VALIDATE_FLOAT),
             'market_cap_cad' => filter_var($data['market_cap_cad'], FILTER_VALIDATE_FLOAT),
@@ -158,8 +158,8 @@ class AdminController {
 
         // Je nettoie/valide.
         $currencyData = [
-            'name' => filter_var($data['name'], FILTER_SANITIZE_STRING),
-            'symbol' => strtoupper(filter_var($data['symbol'], FILTER_SANITIZE_STRING)),
+            'name' => htmlspecialchars(strip_tags($data['name']), ENT_QUOTES, 'UTF-8'),
+            'symbol' => strtoupper(htmlspecialchars(strip_tags($data['symbol']), ENT_QUOTES, 'UTF-8')),
             'current_price_cad' => filter_var($data['current_price_cad'], FILTER_VALIDATE_FLOAT),
             'change_24h_percent' => filter_var($data['change_24h_percent'], FILTER_VALIDATE_FLOAT),
             'market_cap_cad' => filter_var($data['market_cap_cad'], FILTER_VALIDATE_FLOAT),
