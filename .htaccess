@@ -1,5 +1,18 @@
 # /cryptotrade/.htaccess
 
+# ---------------------------------------------------------------
+# InfinityFree / shared hosting deployment config
+# Uncomment and fill in the lines below before uploading.
+# ---------------------------------------------------------------
+# SetEnv APP_ENV production
+# SetEnv APP_BASE_URL https://yoursite.infinityfreeapp.com
+# SetEnv DB_HOST sql123.infinityfree.com
+# SetEnv DB_NAME if0_12345678_cryptotrade
+# SetEnv DB_USER if0_12345678
+# SetEnv DB_PASS your_db_password
+# SetEnv DB_PORT 3306
+# ---------------------------------------------------------------
+
 RewriteEngine On
 
 # Redirect Trailing Slashes If Not A Folder...
