@@ -28,6 +28,12 @@ class UserController {
     // Point API: MAJ Profil
     public function updateProfile() {
         AuthGuard::protect(); // Faut être connecté
+        
+        // Restriction Compte Démo
+        if (Session::get('is_demo') === true) {
+            return $this->jsonResponse(false, 'Les modifications de profil sont désactivées pour le compte démo.', null, 403);
+        }
+
         Csrf::protect($this->request);
 
         $userId = AuthGuard::user();

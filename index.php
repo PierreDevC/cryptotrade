@@ -71,6 +71,9 @@ $router->post("/login", "App\Controllers\AuthController@login");
 $router->post("/signup", "App\Controllers\AuthController@signup");
 $router->post("/logout", "App\Controllers\AuthController@logout");
 
+// Route Demo Account
+$router->get("/login/demo", "App\Controllers\AuthController@loginDemo");
+
 // Route Dashboard (Protégée) - Le contrôleur gère le require
 $router->get("/dashboard", "App\Controllers\DashboardController@index");
 

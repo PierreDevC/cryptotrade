@@ -50,6 +50,7 @@ class AuthController {
                 exit;
             }
             // Connexion réussie
+            session_regenerate_id(true);
             Session::set('user_id', $user['id']);
             Session::set('user_fullname', $user['fullname']);
             Session::set('is_admin', (bool)$user['is_admin']);
@@ -123,5 +124,35 @@ class AuthController {
         Session::destroy();
         header('Location: ' . BASE_URL . '/login');
         exit;
+    }
+
+    public function loginDemo() {
+        $email = 'demo@cryptotrade.com';
+        
+        $user = $this->userModel->findByEmail($email);
+
+        if ($user) {
+            if ($user['status'] !== 'active') {
+                Session::flash('error', 'Le compte démo est actuellement inactif.');
+                header('Location: ' . BASE_URL . '/login');
+                exit;
+            }
+            // Connexion réussie
+            session_regenerate_id(true);
+            Session::set('user_id', $user['id']);
+            Session::set('user_fullname', $user['fullname']);
+            Session::set('is_admin', (bool)$user['is_admin']);
+            Session::set('is_demo', true); // Flag for demo account
+            $this->userModel->updateLastLogin($user['id']);
+
+            // Redirection vers le tableau de bord
+            header('Location: ' . BASE_URL . '/dashboard');
+            exit;
+        } else {
+            // Échec de la connexion (compte non trouvé en BDD)
+            Session::flash('error', 'Compte démo non trouvé. Veuillez contacter le support.');
+            header('Location: ' . BASE_URL . '/login');
+            exit;
+        }
     }
 }

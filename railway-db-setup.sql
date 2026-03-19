@@ -88,11 +88,12 @@ INSERT INTO `currencies` (`name`, `symbol`, `current_price_usd`, `change_24h_per
 ('Uniswap', 'UNI', 7.20, 2.80, 4300000000.00, 0.0350, 0.0008),
 ('Cosmos', 'ATOM', 9.80, -1.50, 3800000000.00, 0.0330, 0.0005);
 
--- Insert test users (password is 'password123' for all)
+-- Insert test users
+-- Admin: Admin@CryptoTrade2026! | Test & Demo: password
 INSERT INTO `users` (`fullname`, `email`, `password_hash`, `balance_cad`, `is_admin`, `status`) VALUES
-('Admin User', 'admin@cryptotrade.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 100000.00, TRUE, 'active'),
-('Test User', 'user@cryptotrade.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 10000.00, FALSE, 'active'),
-('Demo Trader', 'demo@cryptotrade.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 5000.00, FALSE, 'active');
+('Admin User',  'admin@cryptotrade.com', '$2y$10$fQ2c31p0bZExZ0KC7kir5uMgvRpc7bYFA5mvIQrnV.WRWj2K.vAIC', 100000.00, TRUE,  'active'),
+('Test User',   'user@cryptotrade.com',  '$2y$10$a36WxloOR6fOJ2r8kLSSQ./HB7mVTTTJRtAltxYs/WCGUGDbauxHq',  10000.00, FALSE, 'active'),
+('Demo Trader', 'demo@cryptotrade.com',  '$2y$10$a36WxloOR6fOJ2r8kLSSQ./HB7mVTTTJRtAltxYs/WCGUGDbauxHq',   5000.00, FALSE, 'active');
 
 -- Re-enable foreign key checks
 SET FOREIGN_KEY_CHECKS=1;

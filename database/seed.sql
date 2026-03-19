@@ -1,3 +1,10 @@
+-- Utilisateurs de test / démo
+-- Admin: Admin@CryptoTrade2026! | Test & Demo: password
+INSERT INTO `users` (`fullname`, `email`, `password_hash`, `balance_cad`, `is_admin`, `status`) VALUES
+('Admin User',  'admin@cryptotrade.com', '$2y$10$fQ2c31p0bZExZ0KC7kir5uMgvRpc7bYFA5mvIQrnV.WRWj2K.vAIC', 100000.00, TRUE,  'active'),
+('Test User',   'user@cryptotrade.com',  '$2y$10$a36WxloOR6fOJ2r8kLSSQ./HB7mVTTTJRtAltxYs/WCGUGDbauxHq',  10000.00, FALSE, 'active'),
+('Demo Trader', 'demo@cryptotrade.com',  '$2y$10$a36WxloOR6fOJ2r8kLSSQ./HB7mVTTTJRtAltxYs/WCGUGDbauxHq',   5000.00, FALSE, 'active');
+
 -- Ajouter 15 Cryptomonnaies populaires
 -- Les prix, variations, market caps sont indicatifs et non en temps réel.
 -- Les volatilités et tendances sont des estimations pour la simulation.
