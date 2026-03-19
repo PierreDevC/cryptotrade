@@ -100,6 +100,18 @@ h1, h2 {
 	opacity: 90%;
 }
 
+.demo-button {
+  background: #2a9d5c;
+  border-color: #2a9d5c;
+  box-shadow: 0 4px 14px rgba(42, 157, 92, 0.45);
+}
+
+.demo-button:hover {
+  background: #248f52;
+  border-color: #248f52;
+  opacity: 1;
+}
+
 /* Styling for special call to action button => register button on banner in homepage (special-action-button) */
 .button-57 {
   position: relative;
