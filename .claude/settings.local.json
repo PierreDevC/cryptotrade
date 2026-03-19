@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git rm database-setup.php debug-signup.php add-crypto-data.php test.php test-signup-simple.php)",
+      "Bash(git checkout -b deploy/infinityfree-ready)",
+      "Bash(git add .htaccess app/Controllers/AdminController.php config.php)",
+      "Bash(git commit:*)",
+      "Bash(git push -u origin deploy/infinityfree-ready)",
+      "Bash(gh pr:*)",
+      "Bash(where gh)",
+      "Bash(winget list GitHub.cli)"
+    ]
+  }
+}

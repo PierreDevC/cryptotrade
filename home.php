@@ -44,10 +44,8 @@
 		<div class="position-absolute top-50 start-50 translate-middle text-center mt-n5">
             <h1 class="display-4 mb-4">La meilleure plateforme pour investir dans les meilleures cryptos</h1>
             <p class="bg-white bg-opacity-75 shadow p-3 rounded">Découvrez CryptoTrade, votre plateforme intuitive et sécurisée...</p>
-            <div class="d-flex justify-content-center gap-3">
-                <a href="<?= BASE_URL ?>/signup" class="button-57 text-decoration-none" role="button"><span class="text">Commencer gratuitement</span><span>Créer un compte</span></a>
-                <a href="<?= BASE_URL ?>/login/demo" class="action-button text-decoration-none">Compte démo</a>
-                <a href="<?= BASE_URL ?>/login" class="action-button text-decoration-none">Se connecter</a>
+            <div class="d-flex justify-content-center">
+                <a href="<?= BASE_URL ?>/login/demo" class="button-57 text-decoration-none" role="button"><span class="text">Essayer le compte démo</span><span>Accès instantané</span></a>
             </div>
         </div>
 	    </div></div>
