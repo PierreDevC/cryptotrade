@@ -39,10 +39,6 @@ class TransactionController {
     public function buy() {
         AuthGuard::protect();
 
-        if (Session::get('is_demo') === true) {
-            return $this->jsonResponse(false, 'Les transactions sont désactivées pour le compte démo.');
-        }
-
         Csrf::protect($this->request);
 
         $userId = AuthGuard::user();
@@ -124,10 +120,6 @@ class TransactionController {
     // Point API: Gérer Vente
     public function sell() {
         AuthGuard::protect();
-
-        if (Session::get('is_demo') === true) {
-            return $this->jsonResponse(false, 'Les transactions sont désactivées pour le compte démo.');
-        }
 
         Csrf::protect($this->request);
 

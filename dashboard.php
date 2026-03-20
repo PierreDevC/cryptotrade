@@ -269,7 +269,7 @@
                             <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#profileSettingsModal"><i class="fa-solid fa-id-card me-2"></i>Profil et Paramètres</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <form id="logoutForm" action="/cryptotrade/logout" method="POST" style="display: none;">
+                                <form id="logoutForm" action="<?= BASE_URL ?>/logout" method="POST" style="display: none;">
                                     <input type="hidden" name="<?php echo App\Utils\Csrf::getTokenName(); ?>" value="<?php echo App\Utils\Csrf::getToken(); ?>">
                                 </form>
                                 <a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logoutForm').submit();">

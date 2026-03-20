@@ -122,12 +122,12 @@ class AuthController {
         Csrf::protect($this->request);
 
         Session::destroy();
-        header('Location: ' . BASE_URL . '/login');
+        header('Location: ' . BASE_URL . '/');
         exit;
     }
 
     public function loginDemo() {
-        $email = 'demo@cryptotrade.com';
+        $email = 'pierre_user@gmail.com';
         
         $user = $this->userModel->findByEmail($email);
 
